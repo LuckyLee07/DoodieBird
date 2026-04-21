@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>frames</key>
+	<dict>
+		<key>Hunter_Jump_0.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{84, 86}, {102, 146}}</string>
+			<key>spriteOffset</key>
+			<string>{10, -9}</string>
+			<key>spriteSize</key>
+			<string>{102, 146}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{272, 336}, {102, 146}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_1.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{89, 71}, {106, 160}}</string>
+			<key>spriteOffset</key>
+			<string>{17, -1}</string>
+			<key>spriteSize</key>
+			<string>{106, 160}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{292, 0}, {106, 160}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_2.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{41, 46}, {136, 184}}</string>
+			<key>spriteOffset</key>
+			<string>{-16, 12}</string>
+			<key>spriteSize</key>
+			<string>{136, 184}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{0, 0}, {136, 184}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_3.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{45, 70}, {140, 158}}</string>
+			<key>spriteOffset</key>
+			<string>{-10, 1}</string>
+			<key>spriteSize</key>
+			<string>{140, 158}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{266, 162}, {140, 158}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_4.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{77, 71}, {118, 158}}</string>
+			<key>spriteOffset</key>
+			<string>{11, -0}</string>
+			<key>spriteSize</key>
+			<string>{118, 158}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{8, 334}, {118, 158}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_5.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{37, 67}, {152, 160}}</string>
+			<key>spriteOffset</key>
+			<string>{-12, 3}</string>
+			<key>spriteSize</key>
+			<string>{152, 160}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{138, 0}, {152, 160}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_6.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{61, 43}, {126, 180}}</string>
+			<key>spriteOffset</key>
+			<string>{-1, 17}</string>
+			<key>spriteSize</key>
+			<string>{126, 180}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{138, 162}, {126, 180}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+		<key>Hunter_Jump_7.png</key>
+		<dict>
+			<key>aliases</key>
+			<array/>
+			<key>spriteColorRect</key>
+			<string>{{74, 86}, {120, 102}}</string>
+			<key>spriteOffset</key>
+			<string>{9, 13}</string>
+			<key>spriteSize</key>
+			<string>{120, 102}</string>
+			<key>spriteSourceSize</key>
+			<string>{250, 300}</string>
+			<key>spriteTrimmed</key>
+			<true/>
+			<key>textureRect</key>
+			<string>{{0, 186}, {120, 102}}</string>
+			<key>textureRotated</key>
+			<false/>
+		</dict>
+	</dict>
+	<key>metadata</key>
+	<dict>
+		<key>version</key>
+		<string>1.5.5</string>
+		<key>format</key>
+		<integer>3</integer>
+		<key>size</key>
+		<string>{512, 512}</string>
+		<key>name</key>
+		<string>Hunter_Jump</string>
+		<key>premultipliedAlpha</key>
+		<false/>
+		<key>target</key>
+		<dict>
+			<key>name</key>
+			<string>default</string>
+			<key>textureFileName</key>
+			<string>Hunter_Jump_default</string>
+			<key>textureFileExtension</key>
+			<string>.png</string>
+			<key>coordinatesFileName</key>
+			<string>Hunter_Jump_default</string>
+			<key>coordinatesFileExtension</key>
+			<string>.plist</string>
+			<key>premultipliedAlpha</key>
+			<false/>
+		</dict>
+	</dict>
+</dict>
+</plist>
