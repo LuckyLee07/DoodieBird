@@ -469,7 +469,15 @@ CGFloat	__ccContentScaleFactor = 1;
 	CCLOG(@"cocos2d: animation started with frame interval: %.2f", 60.0f/frameInterval);
 
 	displayLink_ = [CADisplayLink displayLinkWithTarget:self selector:@selector(mainLoop:)];
-	[displayLink_ setFrameInterval:frameInterval];
+	if (@available(iOS 10.0, *)) {
+		NSInteger preferredFramesPerSecond = MAX((NSInteger)lround(1.0 / animationInterval_), 1);
+		displayLink_.preferredFramesPerSecond = preferredFramesPerSecond;
+	} else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+		[displayLink_ setFrameInterval:frameInterval];
+#pragma clang diagnostic pop
+	}
 
 #if CC_DIRECTOR_IOS_USE_BACKGROUND_THREAD
 	//

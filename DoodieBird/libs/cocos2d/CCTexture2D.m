@@ -210,7 +210,7 @@ static CCTexture2DPixelFormat defaultAlphaPixelFormat_ = kCCTexture2DPixelFormat
 
 - (NSString*) description
 {
-	return [NSString stringWithFormat:@"<%@ = %p | Name = %i | Dimensions = %ix%i | Pixel format = %@ | Coordinates = (%.2f, %.2f)>", [self class], self, name_, width_, height_, [self stringForFormat], maxS_, maxT_];
+	return [NSString stringWithFormat:@"<%@ = %p | Name = %u | Dimensions = %lux%lu | Pixel format = %@ | Coordinates = (%.2f, %.2f)>", [self class], self, name_, (unsigned long)width_, (unsigned long)height_, [self stringForFormat], maxS_, maxT_];
 }
 
 -(CGSize) contentSize
@@ -325,7 +325,7 @@ static CCTexture2DPixelFormat defaultAlphaPixelFormat_ = kCCTexture2DPixelFormat
 			
 			NSUInteger neededBytes = (4 - mod ) / (bpp/8);
 
-			CCLOGWARN(@"cocos2d: WARNING converting size=(%d,%d) to size=(%d,%d) due to iOS 5.x memory BUG. See: http://www.cocos2d-iphone.org/forum/topic/31092", textureWidth, textureHeight, textureWidth + neededBytes, textureHeight );
+			CCLOGWARN(@"cocos2d: WARNING converting size=(%lu,%lu) to size=(%lu,%lu) due to iOS 5.x memory BUG. See: http://www.cocos2d-iphone.org/forum/topic/31092", (unsigned long)textureWidth, (unsigned long)textureHeight, (unsigned long)(textureWidth + neededBytes), (unsigned long)textureHeight );
 			textureWidth = textureWidth + neededBytes;
 		}
 	}   
@@ -472,6 +472,8 @@ static CCTexture2DPixelFormat defaultAlphaPixelFormat_ = kCCTexture2DPixelFormat
 - (id) initWithString:(NSString*)string dimensions:(CGSize)dimensions hAlignment:(CCTextAlignment)hAlignment vAlignment:(CCVerticalTextAlignment) vAlignment lineBreakMode:(CCLineBreakMode)lineBreakMode font:(UIFont*)uifont
 {
 	NSAssert( uifont, @"Invalid font");
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 	// MUST have the same order declared on ccTypes
 	NSInteger linebreaks[] = {UILineBreakModeWordWrap, UILineBreakModeCharacterWrap, UILineBreakModeClip, UILineBreakModeHeadTruncation, UILineBreakModeTailTruncation, UILineBreakModeMiddleTruncation};
@@ -534,10 +536,11 @@ static CCTexture2DPixelFormat defaultAlphaPixelFormat_ = kCCTexture2DPixelFormat
 #if CC_USE_LA88_LABELS
 	NSUInteger textureSize = textureWidth*textureHeight;
 	unsigned short *la88_data = (unsigned short*)data;
-	for(int i = textureSize-1; i>=0; i--) //Convert A8 to AI88
+	for(NSInteger i = (NSInteger)textureSize - 1; i >= 0; i--) //Convert A8 to AI88
 		la88_data[i] = (data[i] << 8) | 0xff;
 
 #endif
+#pragma clang diagnostic pop
 
 	self = [self initWithData:data pixelFormat:LABEL_PIXEL_FORMAT pixelsWide:textureWidth pixelsHigh:textureHeight contentSize:dimensions];
 
@@ -628,8 +631,12 @@ static CCTexture2DPixelFormat defaultAlphaPixelFormat_ = kCCTexture2DPixelFormat
 #ifdef __CC_PLATFORM_IOS
 	id font;
 	font = [UIFont fontWithName:name size:size];
-	if( font )
+	if( font ) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		dim = [string sizeWithFont:font];
+#pragma clang diagnostic pop
+	}
 
 	if( ! font ) {
 		CCLOG(@"cocos2d: Unable to load font %@", name);
@@ -995,4 +1002,3 @@ static BOOL PVRHaveAlphaPremultiplied_ = NO;
 	return  nil;
 }
 @end
-

@@ -18,6 +18,16 @@
 #import "MusicMannger.h"
 #import "PauseGame.h"
 
+static void MGInvalidateTimer(NSTimer **timer)
+{
+    if (timer != NULL && *timer != nil)
+    {
+        [*timer invalidate];
+        [*timer release];
+        *timer = nil;
+    }
+}
+
 @implementation MyObstacle
 
 @synthesize m_bIsAdd;
@@ -473,7 +483,7 @@
         for(int i=0; i< nLevelcount; i++)
         {
             NSLog(@"i = %d", i);
-            MyObstacle* pObstacleNode = [[[MyObstacle alloc] init] retain];
+            MyObstacle* pObstacleNode = [[MyObstacle alloc] init];
             //pObstacleNode.m_bIsAdd = Level1[i].m_bisAdd;
             pObstacleNode.m_bIsAdd = NodeList.pLevelList[i].m_bisAdd;
             pObstacleNode.m_ObstacleList = [[CCArray alloc] initWithCapacity:25];
@@ -580,7 +590,7 @@
             HunterMessage pTem = [pFileManager GetHunterMessage:nIndex :n];
             //Add by zhengxf "判断障碍物类型" 2012-7-10 ------begin--------
             CCMyHunterSprite* Hunter = nil;
-            Hunter = [[CCMyHunterSprite spriteWithFile:@"Hunter.png"] retain];
+            Hunter = [CCMyHunterSprite spriteWithFile:@"Hunter.png"];
             //switch (pTem.m_nType) 
             //{
             //     case 0:
@@ -673,10 +683,9 @@
 
 -(void) onExit
 {
-    [m_timer invalidate];
-    [m_timer release];
-    [m_BridTimer invalidate];
-    [m_BridTimer release];
+    MGInvalidateTimer(&m_timer);
+    MGInvalidateTimer(&m_BridTimer);
+    MGInvalidateTimer(&m_FithtTimer);
     //Add bu zhengxf about "游戏结束释放资源" 2012-7-26-----begin------
     for(int i= 0; i< m_ObstacleArray.count; i++)
     {
@@ -691,6 +700,21 @@
 	[[[CCDirector sharedDirector] touchDispatcher] removeDelegate:self];
     
 	[super onExit];
+}
+
+- (void)dealloc
+{
+    MGInvalidateTimer(&m_timer);
+    MGInvalidateTimer(&m_BridTimer);
+    MGInvalidateTimer(&m_FithtTimer);
+
+    [m_ShitList release];
+    [m_HunterList release];
+    [m_ObstacleArray release];
+    [m_BeanList release];
+    [m_ScoreList release];
+
+    [super dealloc];
 }
 
 - (void)ccTouchesBegan:(NSSet *)touches withEvent:(UIEvent *)event 
@@ -992,13 +1016,14 @@
 
 -(void) MoveBean
 {
-    
-    for(int i =0; i< m_ObstacleArray.count; i++)
+    NSUInteger i = 0;
+    while (i < m_ObstacleArray.count)
     {
         MyObstacle* pNode = [m_ObstacleArray objectAtIndex:i];
         if(!pNode.m_bIsAdd)
         {
-            for(int j = 0; j< pNode.m_ObstacleList.count; j++)
+            BOOL shouldRemoveObstacle = NO;
+            for (NSUInteger j = 0; j < pNode.m_ObstacleList.count; j++)
             {
                 CCMyBeanSprite* NodeMessage = [pNode.m_ObstacleList objectAtIndex:j];
                 if(NodeMessage)
@@ -1039,13 +1064,22 @@
                     NodeMessage.position = ccpAdd(NodeMessage.position, ccp(-0.5 * FORWARD_MOVE_RATIO, 0));
                     if(j == pNode.m_ObstacleList.count -1 && NodeMessage.position.x <= -NodeMessage.contentSize.width)
                     {
-                        [m_ObstacleArray removeObjectAtIndex:i];
-                        NSLog(@"m_ObstacleArray.count = %lu", (unsigned long)m_ObstacleArray.count);
                         pNode.m_bIsAdd = true;
+                        shouldRemoveObstacle = YES;
+                        break;
                     }
                 }
             }
+
+            if (shouldRemoveObstacle)
+            {
+                [m_ObstacleArray removeObjectAtIndex:i];
+                NSLog(@"m_ObstacleArray.count = %lu", (unsigned long)m_ObstacleArray.count);
+                continue;
+            }
         }
+
+        i++;
     }
 }
 

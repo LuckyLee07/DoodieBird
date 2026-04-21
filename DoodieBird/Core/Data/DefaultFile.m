@@ -68,6 +68,16 @@ static DefaultFile *PromptMg = nil;
 	return nScore;
 }
 
+- (BOOL)hasValueForKey:(NSString *)strKey
+{
+    if (m_SwitchV == nil || strKey == nil)
+    {
+        return NO;
+    }
+
+    return [m_SwitchV objectForKey:strKey] != nil;
+}
+
 //写入bool类型数据
 -(void)SetBoolForKey:(bool) bValue ForKey:(NSString*) strKey
 {

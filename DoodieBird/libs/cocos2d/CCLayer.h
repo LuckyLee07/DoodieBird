@@ -48,6 +48,8 @@
  - It can receive Accelerometer input
 */
 #ifdef __CC_PLATFORM_IOS
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @interface CCLayer : CCNode <UIAccelerometerDelegate, CCStandardTouchDelegate, CCTargetedTouchDelegate>
 {
 	BOOL isTouchEnabled_;
@@ -85,6 +87,7 @@
  @since v0.8.1
  */
 @property(nonatomic,assign) BOOL isAccelerometerEnabled;
+#pragma clang diagnostic pop
 
 #elif defined(__CC_PLATFORM_MAC)
 
@@ -277,4 +280,3 @@ the background.
  */
 -(void) switchToAndReleaseMe: (unsigned int) n;
 @end
-

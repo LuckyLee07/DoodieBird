@@ -142,6 +142,8 @@ typedef enum {
  - Frameworks: OpenAL, AudioToolbox, AVFoundation
  @since v0.8
  */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 @interface CDAudioManager : NSObject <CDLongAudioSourceDelegate, CDAudioInterruptProtocol, AVAudioSessionDelegate> {
 	CDSoundEngine		*soundEngine;
 	CDLongAudioSource	*backgroundMusic;
@@ -168,6 +170,8 @@ typedef enum {
 @property (readonly) BOOL willPlayBackgroundMusic;
 
 /** Returns the shared singleton */
++ (CDAudioManager *) sharedManager;
+#pragma clang diagnostic pop
 + (CDAudioManager *) sharedManager;
 + (tAudioManagerState) sharedManagerState;
 /** Configures the shared singleton with a mode*/
@@ -240,4 +244,3 @@ static const int kCDNoBuffer = -1;
 -(void) releaseBufferForFile:(NSString *) filePath;
 
 @end
-

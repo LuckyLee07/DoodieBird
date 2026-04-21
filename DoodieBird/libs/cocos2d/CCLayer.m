@@ -96,10 +96,17 @@
 	if( enabled != isAccelerometerEnabled_ ) {
 		isAccelerometerEnabled_ = enabled;
 		if( isRunning_ ) {
-			if( enabled )
+			if( enabled ) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 				[[UIAccelerometer sharedAccelerometer] setDelegate:self];
-			else
+#pragma clang diagnostic pop
+			} else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 				[[UIAccelerometer sharedAccelerometer] setDelegate:nil];
+#pragma clang diagnostic pop
+			}
 		}
 	}
 }
@@ -239,8 +246,12 @@
 -(void) onEnterTransitionDidFinish
 {
 #ifdef __CC_PLATFORM_IOS
-	if( isAccelerometerEnabled_ )
+	if( isAccelerometerEnabled_ ) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		[[UIAccelerometer sharedAccelerometer] setDelegate:self];
+#pragma clang diagnostic pop
+	}
 #endif
 
 	[super onEnterTransitionDidFinish];
@@ -255,8 +266,12 @@
 	if( isTouchEnabled_ )
 		[[director touchDispatcher] removeDelegate:self];
 
-	if( isAccelerometerEnabled_ )
+	if( isAccelerometerEnabled_ ) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		[[UIAccelerometer sharedAccelerometer] setDelegate:nil];
+#pragma clang diagnostic pop
+	}
 
 #elif defined(__CC_PLATFORM_MAC)
 	CCEventDispatcher *eventDispatcher = [director eventDispatcher];
@@ -471,7 +486,7 @@
 
 	// Compressed Interpolation mode
 	if( compressedInterpolation_ ) {
-		float h2 = 1 / ( fabsf(u.x) + fabsf(u.y) );
+		float h2 = 1 / ( fabs(u.x) + fabs(u.y) );
 		u = ccpMult(u, h2 * (float)c);
 	}
 

@@ -21,7 +21,13 @@
 		m_nFristLogin = 0;
         m_bSetGame = false;
         m_bIsMove = false;
-        m_bMusicOpen = [[DefaultFile sharedDefaultFile] GetBoolForKey:MUSIC_IS_OPEN];
+        DefaultFile *defaultFile = [DefaultFile sharedDefaultFile];
+        if (![defaultFile hasValueForKey:MUSIC_IS_OPEN])
+        {
+            [defaultFile SetBoolForKey:true ForKey:MUSIC_IS_OPEN];
+        }
+        m_bMusicOpen = [defaultFile GetBoolForKey:MUSIC_IS_OPEN];
+        [[MusicMannger sharedMusicMannger] SetIsOpenMusic:m_bMusicOpen];
         m_winSize = [CCDirector sharedDirector].winSize;
         
 		CCSprite *sp = [CCSprite spriteWithFile:@"MainBk.png"];
@@ -201,8 +207,6 @@
 
 -(void) MusicGame:(id) sender
 {
-    int n = 100;
-    n = 10;
     m_bMusicOpen = !m_bMusicOpen;
     [[DefaultFile sharedDefaultFile] SetBoolForKey:m_bMusicOpen ForKey:MUSIC_IS_OPEN];
     CCMenu *menuMusic = (CCMenu *)[self getChildByTag: MUSIC_ITEM];
@@ -211,13 +215,17 @@
     CCSprite *MusicNormal = [CCSprite spriteWithFile:@"GameMusic.png"];
     CCSprite *MusicSelected = [CCSprite spriteWithFile:@"GameMusicSel.png"];
      MusicMannger* pMusicMgr = [MusicMannger sharedMusicMannger];
+    if(pMusicMgr)
+    {
+        [pMusicMgr SetIsOpenMusic:m_bMusicOpen];
+    }
     if(m_bMusicOpen)
     {
         [pItem setNormalImage:MusicSelected];
         [pItem setSelectedImage:MusicNormal];
         if(pMusicMgr)
         {
-            [pMusicMgr PauseMusic];
+            [pMusicMgr PlayBackGroudMusic];
         }
     }
     else 
@@ -226,7 +234,7 @@
         [pItem setSelectedImage:MusicSelected];
         if(pMusicMgr)
         {
-            [pMusicMgr PlayBackGroudMusic];
+            [pMusicMgr PauseMusic];
         }
     }
 }
@@ -279,7 +287,9 @@
         [pItem setNormalImage:MusicNormal];
         [pItem setSelectedImage:MusicSelected];
     }
-    [[MusicMannger sharedMusicMannger] PlayBackGroudMusic];
+    MusicMannger *musicManager = [MusicMannger sharedMusicMannger];
+    [musicManager SetIsOpenMusic:m_bMusicOpen];
+    [musicManager PauseMusic];
 }
 
 - (void) dealloc

@@ -38,6 +38,7 @@
 
 -(void)SetIntegerForKey:(int) nValue  ForKey:(NSString*)strKey;
 -(int) GetIntegerForKey:(NSString*) strKey;
+- (BOOL)hasValueForKey:(NSString *)strKey;
 
 //写入bool类型数据
 -(void)SetBoolForKey:(bool) bValue ForKey:(NSString*) strKey;

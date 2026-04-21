@@ -319,7 +319,10 @@ static BOOL configured = FALSE;
 -(BOOL) isOtherAudioPlaying {
 	UInt32 isPlaying = 0;
 	UInt32 varSize = sizeof(isPlaying);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	AudioSessionGetProperty (kAudioSessionProperty_OtherAudioIsPlaying, &varSize, &isPlaying);
+#pragma clang diagnostic pop
 	return (isPlaying != 0);
 }
 
@@ -388,10 +391,13 @@ static BOOL configured = FALSE;
  * Known triggers: lock the device then unlock it (iOS 4.2 gm), playback a song using MPMediaPlayer (iOS 4.0)
  */
 - (void) badAlContextHandler {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	if (_interrupted && alcGetCurrentContext() == NULL) {
 		CDLOG(@"Denshion::CDAudioManager - bad OpenAL context detected, attempting to resume audio session");
 		[self audioSessionResumed];
 	}
+#pragma clang diagnostic pop
 }
 
 - (id) init: (tAudioManagerMode) mode {
@@ -399,7 +405,10 @@ static BOOL configured = FALSE;
 
 		//Initialise the audio session
 		AVAudioSession* session = [AVAudioSession sharedInstance];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		session.delegate = self;
+#pragma clang diagnostic pop
 
 		_mode = mode;
 		backgroundMusicCompletionSelector = nil;
@@ -476,11 +485,14 @@ static BOOL configured = FALSE;
 	CFStringRef newAudioRoute;
 	UInt32 propertySize = sizeof (CFStringRef);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	AudioSessionGetProperty (
 							 kAudioSessionProperty_AudioRoute,
 							 &propertySize,
 							 &newAudioRoute
 							 );
+#pragma clang diagnostic pop
 
 	if (newAudioRoute == NULL) {
 		//Don't expect this to happen but playing safe otherwise a null in the CFStringCompare will cause a crash
@@ -732,6 +744,8 @@ static BOOL configured = FALSE;
 		// Deactivate the current audio session
 	    [self audioSessionSetActive:NO];
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		if (alcGetCurrentContext() != NULL) {
 			CDLOGINFO(@"Denshion::CDAudioManager - Setting OpenAL context to NULL");
 
@@ -745,6 +759,7 @@ static BOOL configured = FALSE;
 			}
 			#pragma unused(error)
 		}
+#pragma clang diagnostic pop
 	}
 }
 
@@ -774,6 +789,8 @@ static BOOL configured = FALSE;
 			}
 		}
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		if (alcGetCurrentContext() == NULL) {
 			CDLOGINFO(@"Denshion::CDAudioManager - Restoring OpenAL context");
 			ALenum  error = AL_NO_ERROR;
@@ -784,6 +801,7 @@ static BOOL configured = FALSE;
 			}
 			#pragma unused(error)
 		}
+#pragma clang diagnostic pop
 	}
 }
 
@@ -883,6 +901,5 @@ static BOOL configured = FALSE;
 	}
 }
 @end
-
 
 

@@ -105,7 +105,24 @@ enum {
 		// XXX: in v0.7, winSize should return the visible size
 		// XXX: so the bar calculation should be done there
 #ifdef __CC_PLATFORM_IOS
-		CGRect r = [[UIApplication sharedApplication] statusBarFrame];
+		CGRect r = CGRectZero;
+		UIApplication *application = [UIApplication sharedApplication];
+		if (@available(iOS 13.0, *)) {
+			for (UIScene *scene in application.connectedScenes) {
+				if ([scene isKindOfClass:[UIWindowScene class]]) {
+					UIStatusBarManager *statusBarManager = [(UIWindowScene *)scene statusBarManager];
+					if (statusBarManager != nil) {
+						r = statusBarManager.statusBarFrame;
+						break;
+					}
+				}
+			}
+		} else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+			r = application.statusBarFrame;
+#pragma clang diagnostic pop
+		}
 		s.height -= r.size.height;
 #endif
 		self.position = ccp(s.width/2, s.height/2);
@@ -157,7 +174,7 @@ enum {
 {
 #ifdef __CC_PLATFORM_IOS
 	CCTouchDispatcher *dispatcher = [[CCDirector sharedDirector] touchDispatcher];
-	[dispatcher setPriority:newPriority forDelegate:self];
+	[dispatcher setPriority:(int)newPriority forDelegate:self];
 
 #elif defined(__CC_PLATFORM_MAC)
 	CCEventDispatcher *dispatcher = [[CCDirector sharedDirector] eventDispatcher];

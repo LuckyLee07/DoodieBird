@@ -9,6 +9,7 @@
 #import "cocos2d.h"
 
 #import "AppDelegate.h"
+#import "DefaultFile.h"
 #import "MusicMannger.h"
 #import "MainMenuSence.h"
 
@@ -130,15 +131,19 @@
 	// Assume that PVR images have premultiplied alpha
 	[CCTexture2D PVRImagesHavePremultipliedAlpha:YES];
 
-	// and add the main menu scene to the stack.
+    // and add the main menu scene to the stack.
     [director_ runWithScene:[MainMenuSence ShowScene]];
-    //Add by zhengxf about "" 2012-8-21 ------begin-------
     MusicMannger* pMusicMgr = [MusicMannger sharedMusicMannger];
     if(pMusicMgr)
     {
-        [pMusicMgr PlayMusic:@"MusicBk.mp3" :true];
+        DefaultFile *defaultFile = [DefaultFile sharedDefaultFile];
+        BOOL musicEnabled = ![defaultFile hasValueForKey:MUSIC_IS_OPEN] || [defaultFile GetBoolForKey:MUSIC_IS_OPEN];
+        [pMusicMgr SetIsOpenMusic:musicEnabled];
+        if (musicEnabled)
+        {
+            [pMusicMgr PlayMusic:@"MusicBk.mp3" :true];
+        }
     }
-    //Add by zhengxf about "" 2012-8-21 ------end-------
 }
 
 -(void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
@@ -152,12 +157,6 @@
     (void)application;
     (void)window;
     return UIInterfaceOrientationMaskLandscape;
-}
-
-// Supported orientations: Landscape. Customize it for your own needs
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-	return UIInterfaceOrientationIsLandscape(interfaceOrientation);
 }
 
 // getting a call, pause the game
