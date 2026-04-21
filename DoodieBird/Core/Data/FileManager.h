@@ -28,20 +28,11 @@ typedef struct _BeanMessage
     int m_nIndex;
 }BeanMessage;
 
-//豆子数据列表
-typedef struct _BeanList
-{
-    int m_nXoffset;
-    int m_nType;
-    NSArray* m_pBeanList;
-}BeanList;
-
 @interface FileManager : NSObject
 {
     NSArray* m_pLevelList;
     NSArray* m_pBeanList;
     NSArray* m_pFlashingList;
-    BeanList m_BeanList;
 }
 +(FileManager*) sharedFileManager;
 
@@ -55,8 +46,6 @@ typedef struct _BeanList
 -(int)  GetBeanLevelTypeCount;                  //获取豆子级别的列表
 -(int)  GetBeanListCount:(int)nIndex;           //获取单个豆子级别的列表
 -(void) OpenBeanFrile:(NSString*) strFileName;  //打开豆子列表数据文件
--(int)  GetBeanXOffset:(int)nIndex;             //获取单个豆子的偏移
--(int)  GetBeanType:(int)nIndex;                //获取豆子的类型
 -(BeanMessage) GetBeanMessage:(int)nLevel :(int)nIndex;
 //豆子的数据操作集合 --------end---------
 
@@ -64,7 +53,6 @@ typedef struct _BeanList
 -(void) OpenFlashingFile:(NSString*) strFileName; //打开闪电的数据列表
 -(int)  GetFlashingLevelTypeCount;
 -(int)  GetFlashingListCount:(int)nIndex;
--(int)  GetFlashingType:(int)nIndex;
 -(BeanMessage) GetFlashingMessage:(int)nLevel :(int)nIndex;
 //闪电的数据集合  ----------end--------
 @end

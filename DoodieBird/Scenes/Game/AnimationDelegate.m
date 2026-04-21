@@ -545,13 +545,10 @@ static AnimationDelegate *pAnimationDelegate = nil;
 
 +(AnimationDelegate *) shareAnimationDelegate
 {
-	@synchronized(self)
-	{
-		if(nil == pAnimationDelegate)
-		{
-			[[self alloc] init];
-		}
-	}
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        pAnimationDelegate = [[super allocWithZone:NULL] init];
+    });
 	return pAnimationDelegate;
 }
 
@@ -562,9 +559,8 @@ static AnimationDelegate *pAnimationDelegate = nil;
         if(pAnimationDelegate == nil)
 		{
             pAnimationDelegate = [super allocWithZone:zone];
-            return pAnimationDelegate;
         }
     }
-    return nil;
+    return pAnimationDelegate;
 }
 @end

@@ -25,13 +25,10 @@
 static LevelManager *MusicMgr = nil;
 + (LevelManager *) sharedLevelMannger
 {
-	@synchronized(self)
-	{
-		if(nil == MusicMgr)
-		{
-			[[self alloc] init];
-		}
-	}
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        MusicMgr = [[super allocWithZone:NULL] init];
+    });
 	return MusicMgr;
 }
 
@@ -42,16 +39,19 @@ static LevelManager *MusicMgr = nil;
         if(MusicMgr == nil)
 		{
             MusicMgr = [super allocWithZone:zone];
-            return MusicMgr;
         }
     }
-    return nil;
+    return MusicMgr;
 }
 
 //获取关卡数据
 -(LevelNodeList) GetLevelList:(int) nIndex
 {
-    LevelNodeList pTem = LevList[nIndex];
+    LevelNodeList pTem = (LevelNodeList){0};
+    if(nIndex >= 0 && nIndex < 30)
+    {
+        pTem = LevList[nIndex];
+    }
     return  pTem;
 }
 

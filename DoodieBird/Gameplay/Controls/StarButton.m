@@ -37,8 +37,8 @@
     m_nScore = score;
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
-    for (int idx=0; idx<len; idx++) 
+    NSUInteger len = strlen(strNum);
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         NSString* strName =  [NSString stringWithFormat:@"LevelNumber_%d.png", nNumber];

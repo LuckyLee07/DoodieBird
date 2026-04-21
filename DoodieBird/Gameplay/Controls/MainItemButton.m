@@ -37,10 +37,10 @@
     m_nScore = score;
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
+    NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
     CCSprite* psLock = (CCSprite*)[self getChildByTag: IRON_CHAIN+1];
-    for (int idx=0; idx<len; idx++) 
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         switch (nType) 
@@ -67,10 +67,10 @@
 {
     char strNum[64];
     sprintf(strNum, "%d",m_nScore);
-    int len = strlen(strNum);
-    for(int n= 0; n < len; n++)
+    NSUInteger len = strlen(strNum);
+    for(NSUInteger n = 0; n < len; n++)
     {
-        CCSprite* ps = (CCSprite*)[self getChildByTag: IRON_CHAIN + 20 + n];
+        CCSprite* ps = (CCSprite*)[self getChildByTag: IRON_CHAIN + 20 + (int)n];
         if(ps)
         {
             ps.visible = false;

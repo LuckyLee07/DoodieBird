@@ -93,9 +93,9 @@
 {
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
+    NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
-    for (int idx=0; idx<len; idx++) 
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         strName =  [NSString stringWithFormat:@"PauseNumber%d.png", nNumber];

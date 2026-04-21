@@ -11,6 +11,16 @@
 
 @synthesize window = window_;
 
+- (AppController *)appController
+{
+    id<UIApplicationDelegate> delegate = [UIApplication sharedApplication].delegate;
+    if ([delegate isKindOfClass:[AppController class]])
+    {
+        return (AppController *)delegate;
+    }
+    return nil;
+}
+
 - (void)scene:(UIScene *)scene
 willConnectToSession:(UISceneSession *)session
       options:(UISceneConnectionOptions *)connectionOptions
@@ -25,7 +35,11 @@ willConnectToSession:(UISceneSession *)session
 
     self.window = [[[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene] autorelease];
 
-    AppController *appController = (AppController *)[UIApplication sharedApplication].delegate;
+    AppController *appController = [self appController];
+    if (appController == nil)
+    {
+        return;
+    }
     [appController configureMainInterfaceInWindow:self.window];
 }
 
@@ -38,28 +52,28 @@ willConnectToSession:(UISceneSession *)session
 - (void)sceneDidBecomeActive:(UIScene *)scene
 {
     (void)scene;
-    AppController *appController = (AppController *)[UIApplication sharedApplication].delegate;
+    AppController *appController = [self appController];
     [appController sceneDidBecomeActive];
 }
 
 - (void)sceneWillResignActive:(UIScene *)scene
 {
     (void)scene;
-    AppController *appController = (AppController *)[UIApplication sharedApplication].delegate;
+    AppController *appController = [self appController];
     [appController sceneWillResignActive];
 }
 
 - (void)sceneWillEnterForeground:(UIScene *)scene
 {
     (void)scene;
-    AppController *appController = (AppController *)[UIApplication sharedApplication].delegate;
+    AppController *appController = [self appController];
     [appController sceneWillEnterForeground];
 }
 
 - (void)sceneDidEnterBackground:(UIScene *)scene
 {
     (void)scene;
-    AppController *appController = (AppController *)[UIApplication sharedApplication].delegate;
+    AppController *appController = [self appController];
     [appController sceneDidEnterBackground];
 }
 

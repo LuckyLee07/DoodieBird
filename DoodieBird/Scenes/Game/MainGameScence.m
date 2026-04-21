@@ -507,7 +507,6 @@
             //Add by zhengxf about "根据不不同级别来取网和豆子" 2012-8-6 --------end---------
             
             //Add by zhengxf about "随机抽取某个级别的豆子关卡" 2012-7-19 ---------end----------
-            id FlashingAction = nil;
             for(int n = 0; n < nBeanCount; n++)
             {
                 BeanMessage pTem;
@@ -567,7 +566,7 @@
             [m_ObstacleArray addObject:pObstacleNode];
             [pObstacleNode release];
         }
-        NSLog(@"m_ObstacleArray.count = %d", m_ObstacleArray.count);
+        NSLog(@"m_ObstacleArray.count = %lu", (unsigned long)m_ObstacleArray.count);
     }
     //Add by zhengxf about "加载豆子列表" 2012-7-18 -------end------
     
@@ -887,7 +886,7 @@
                 bAllRight = false;
             }
         }
-        NSLog(@"%d", [touches count]);
+        NSLog(@"%lu", (unsigned long)[touches count]);
         NSLog(@"%d", bAllRight);
         m_bAllRight = bAllRight;
     }
@@ -918,7 +917,7 @@
     if(!m_bGameOver)
     {
         bool bAllRight = true;
-        NSLog(@"%d", [touches count]);
+        NSLog(@"%lu", (unsigned long)[touches count]);
         for(int n=0; n< [touches count]; n++)
         {
             UITouch* temTouch = [[touches allObjects] objectAtIndex:n];
@@ -1041,7 +1040,7 @@
                     if(j == pNode.m_ObstacleList.count -1 && NodeMessage.position.x <= -NodeMessage.contentSize.width)
                     {
                         [m_ObstacleArray removeObjectAtIndex:i];
-                        NSLog(@"m_ObstacleArray.count = %d", m_ObstacleArray.count);
+                        NSLog(@"m_ObstacleArray.count = %lu", (unsigned long)m_ObstacleArray.count);
                         pNode.m_bIsAdd = true;
                     }
                 }
@@ -2222,7 +2221,7 @@
     int nCount = 0;
     switch (nType) {
         case 1:
-            nCount = [m_BeanList count];
+            nCount = (int)[m_BeanList count];
             if(nCount >0)
             {
                 for(int i=0; i< nCount; i++)
@@ -2238,7 +2237,7 @@
             }
             break;
         case 2:
-            nCount = [m_ScoreList count];
+            nCount = (int)[m_ScoreList count];
             if(nCount >0)
             {
                 for(int i=0; i< nCount; i++)
@@ -2259,9 +2258,9 @@
     //Add by zhengxf about "移处原来的数据" 2012-8-22 ------end-------
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
+    NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
-    for (int idx=0; idx<len; idx++) 
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         CCSprite* sp = nil;

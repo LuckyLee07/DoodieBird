@@ -207,9 +207,9 @@
 {
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
+    NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
-    for (int idx=0; idx<len; idx++) 
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         strName =  [NSString stringWithFormat:@"Big_Number_%d.png", nNumber];
@@ -236,10 +236,10 @@
     {
         char strNum[64];
         sprintf(strNum, "%d",bBeanCount);
-        int len = strlen(strNum);
-        for(int n=0; n<len; n++)
+        NSUInteger len = strlen(strNum);
+        for(NSUInteger n = 0; n < len; n++)
         {
-            [self removeChildByTag:nType*10 + 20 +n cleanup:YES];
+            [self removeChildByTag:nType * 10 + 20 + (int)n cleanup:YES];
         }
     }
 }

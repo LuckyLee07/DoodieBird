@@ -130,11 +130,7 @@
 	// Assume that PVR images have premultiplied alpha
 	[CCTexture2D PVRImagesHavePremultipliedAlpha:YES];
 
-	// and add the scene to the stack. The director will run it when it automatically when the view is displayed.	
-	//[director_ pushScene: [HelloWorldLayer scene]]; 
-    //[director_ runWithScene:[MainGameScence ShowScene]];
-    
-    
+	// and add the main menu scene to the stack.
     [director_ runWithScene:[MainMenuSence ShowScene]];
     //Add by zhengxf about "" 2012-8-21 ------begin-------
     MusicMannger* pMusicMgr = [MusicMannger sharedMusicMannger];

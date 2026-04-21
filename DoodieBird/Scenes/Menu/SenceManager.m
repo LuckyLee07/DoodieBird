@@ -16,18 +16,26 @@
 #import "GameCompleteScene.h"
 #import "GameOver.h"
 
+static void SMTransitionToScene(CCScene *scene)
+{
+    if (scene == nil)
+    {
+        return;
+    }
+
+    [[CCDirector sharedDirector] replaceScene:[CCTransitionFade transitionWithDuration:0.3f scene:scene withColor:ccWHITE]];
+    [[CCTextureCache sharedTextureCache] removeUnusedTextures];
+}
+
 @implementation SenceManager
 //定义全局静态对象
 static SenceManager *sharedDataManager = nil;
 + (SenceManager *) sharedSenceManager
 {
-	@synchronized(self)
-	{
-        if (sharedDataManager == nil)
-		{
-            [[self alloc] init];
-        }
-    }
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedDataManager = [[super allocWithZone:NULL] init];
+    });
     return sharedDataManager;
 }
 
@@ -38,66 +46,49 @@ static SenceManager *sharedDataManager = nil;
         if(sharedDataManager == nil)
 		{
             sharedDataManager = [super allocWithZone:zone];
-            return sharedDataManager;
         }
     }
-    return nil;
+    return sharedDataManager;
 }
 
 -(void) ShowGameSence
 {
-	CCScene *sc = [MainGameScence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures];
+	SMTransitionToScene([MainGameScence node]);
 }
 
 -(void) ShowMainMenuSence
 {
-	CCScene *sc = [MainMenuSence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+	SMTransitionToScene([MainMenuSence node]);
 }
 
 -(void) ShowShopSence
 {
-    CCScene *sc = [ShopSence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([ShopSence node]);
 }
 
 -(void) ShowSelectChapterScene //选择章节的场景
 {
-    CCScene *sc = [SelectChapterSence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([SelectChapterSence node]);
 }
 
 -(void) ShowLevelScene         //选择关卡的场景
 {
-    CCScene *sc = [SelectLevelScene node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([SelectLevelScene node]);
 }
 
 -(void) ShowShitScene          //选择便便的场景
 {
-    CCScene *sc = [SelectShitScene node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([SelectShitScene node]);
 }
 
 -(void) ShowPauseScene         //暂停的场景
 {
-    CCScene *sc = [PauseSence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([PauseSence node]);
 }
 
 -(void) ShowGameCompleteScene  //游戏结束的场景
 {
-    CCScene *sc = [GameOverScence node];	
-	[[CCDirector sharedDirector] replaceScene: [ CCTransitionFade  transitionWithDuration:0.3f scene:sc withColor:ccWHITE]];
-	[[CCTextureCache sharedTextureCache ] removeUnusedTextures ];
+    SMTransitionToScene([GameOverScence node]);
 }
 
 -(void) ShowHeadStarMp4      //片头动画

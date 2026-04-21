@@ -123,14 +123,11 @@ static CCAnimationManager *AnimationMgr = nil;
 
 + (CCAnimationManager *) sharedAnimationManager
 {
-	@synchronized(self)
-	{
-		if(nil == AnimationMgr)
-		{
-			[[self alloc] init];
-            [AnimationMgr AddAllAnima];
-		}
-	}
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        AnimationMgr = [[super allocWithZone:NULL] init];
+        [AnimationMgr AddAllAnima];
+    });
 	return AnimationMgr;
 }
 
@@ -141,9 +138,8 @@ static CCAnimationManager *AnimationMgr = nil;
         if(AnimationMgr == nil)
 		{
             AnimationMgr = [super allocWithZone:zone];
-            return AnimationMgr;
         }
     }
-    return nil;
+    return AnimationMgr;
 }
 @end

@@ -20,11 +20,6 @@
 	self = [super init];
 	if (self)
 	{
-        //Add by zhengxf about "加入游戏总分数的概念" 2012-8-7 -------begin-------
-        int nAllScore = [[DefaultFile sharedDefaultFile] GetIntegerForKey:ALL_SCORE];
-        int nStar = [[DefaultFile sharedDefaultFile] GetIntegerForKey:NOW_STAR];
-        //Add by zhengxf about "加入游戏总分数的概念" 2012-8-7 -------end-------
-        
         CCSprite *sp = [CCSprite spriteWithFile:@"SelectChapterBk.png"];
 		sp.anchorPoint = CGPointZero;
 		[self addChild:sp z:0 tag:1];
@@ -130,9 +125,9 @@
 {
     char strNum[64];
     sprintf(strNum, "%d",score);
-    int len = strlen(strNum);
+    NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
-    for (int idx=0; idx<len; idx++) 
+    for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
         CCSprite* sp = nil;

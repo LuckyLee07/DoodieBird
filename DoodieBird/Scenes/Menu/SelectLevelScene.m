@@ -116,7 +116,7 @@
 -(void) newGame:(id) sender
 {
     CCMenuItemSprite* pNode = (CCMenuItemSprite*)sender;
-    int nTag  = [pNode tag];
+    int nTag  = (int)[pNode tag];
     [[LevelManager sharedLevelMannger] SetLevel:nTag];
     SenceManager* SManager = [SenceManager sharedSenceManager];
     if(SManager)

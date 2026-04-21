@@ -23,13 +23,10 @@
 static MusicMannger *MusicMgr = nil;
 + (MusicMannger *) sharedMusicMannger
 {
-	@synchronized(self)
-	{
-		if(nil == MusicMgr)
-		{
-			[[self alloc] init];
-		}
-	}
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        MusicMgr = [[super allocWithZone:NULL] init];
+    });
 	return MusicMgr;
 }
 
@@ -40,10 +37,9 @@ static MusicMannger *MusicMgr = nil;
         if(MusicMgr == nil)
 		{
             MusicMgr = [super allocWithZone:zone];
-            return MusicMgr;
         }
     }
-    return nil;
+    return MusicMgr;
 }
 
 

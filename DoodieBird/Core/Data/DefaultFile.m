@@ -27,13 +27,10 @@ static DefaultFile *PromptMg = nil;
 
 + (DefaultFile *) sharedDefaultFile
 {
-	@synchronized(self)
-	{
-		if(nil == PromptMg)
-		{
-			[[self alloc] init];
-		}
-	}
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        PromptMg = [[super allocWithZone:NULL] init];
+    });
 	return PromptMg;
 }
 
@@ -44,10 +41,9 @@ static DefaultFile *PromptMg = nil;
         if(PromptMg == nil)
 		{
             PromptMg = [super allocWithZone:zone];
-            return PromptMg;
         }
     }
-    return nil;
+    return PromptMg;
 }
 
 -(void)SetIntegerForKey:(int) nValue  ForKey:(NSString*)strKey
@@ -65,9 +61,9 @@ static DefaultFile *PromptMg = nil;
 -(int) GetIntegerForKey:(NSString*) strKey
 {
     int nScore = 0;
-	if(m_SwitchV)
+	if(m_SwitchV && strKey)
 	{
-		nScore = [m_SwitchV integerForKey:strKey];
+		nScore = (int)[m_SwitchV integerForKey:strKey];
 	}
 	return nScore;
 }
@@ -88,9 +84,9 @@ static DefaultFile *PromptMg = nil;
 -(bool)GetBoolForKey:(NSString*) strKey
 {
     bool bScore = 0;
-	if(m_SwitchV)
+	if(m_SwitchV && strKey)
 	{
-		bScore = [m_SwitchV integerForKey:strKey];
+		bScore = [m_SwitchV boolForKey:strKey];
 	}
 	return bScore;
 }
@@ -104,7 +100,7 @@ static DefaultFile *PromptMg = nil;
         for(int j= 1; j<=10; j++)
         {
             NSString* pKey = [NSString stringWithFormat:@"%@_%d_%d",LEVEL_STAR, i, j];
-            int nLeveStar = [m_SwitchV integerForKey:pKey];
+            int nLeveStar = (int)[m_SwitchV integerForKey:pKey];
             nStar+= nLeveStar;
         }
     }
