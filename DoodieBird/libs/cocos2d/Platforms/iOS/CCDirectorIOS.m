@@ -62,6 +62,34 @@
 
 CGFloat	__ccContentScaleFactor = 1;
 
+static const CGFloat kDBLegacyDesignWidth = 480.0f;
+static const CGFloat kDBLegacyDesignHeight = 320.0f;
+
+static CGSize DBLegacyVisibleSizeForViewSize(CGSize viewSize)
+{
+	if (viewSize.width <= 0.0f || viewSize.height <= 0.0f)
+		return CGSizeMake(kDBLegacyDesignWidth, kDBLegacyDesignHeight);
+
+	CGFloat width = MAX(viewSize.width, viewSize.height);
+	CGFloat height = MIN(viewSize.width, viewSize.height);
+	CGFloat aspect = width / height;
+	CGFloat designAspect = kDBLegacyDesignWidth / kDBLegacyDesignHeight;
+
+	if (aspect >= designAspect)
+		return CGSizeMake(roundf(kDBLegacyDesignHeight * aspect), kDBLegacyDesignHeight);
+
+	return CGSizeMake(kDBLegacyDesignWidth, roundf(kDBLegacyDesignWidth / aspect));
+}
+
+static CGSize DBViewportSizeInPixelsForView(CCGLView *view)
+{
+	if (view == nil)
+		return CGSizeZero;
+
+	CGSize viewSize = [view bounds].size;
+	return CGSizeMake(viewSize.width * __ccContentScaleFactor, viewSize.height * __ccContentScaleFactor);
+}
+
 #pragma mark -
 #pragma mark Director
 
@@ -178,8 +206,13 @@ CGFloat	__ccContentScaleFactor = 1;
 {
 	CGSize size = winSizeInPixels_;
 	CGSize sizePoint = winSizeInPoints_;
+	CGSize viewportSize = DBViewportSizeInPixelsForView((CCGLView *)view_);
 
-	glViewport(0, 0, size.width, size.height );
+	if (viewportSize.width <= 0.0f || viewportSize.height <= 0.0f) {
+		viewportSize = size;
+	}
+
+	glViewport(0, 0, viewportSize.width, viewportSize.height );
 
 	switch (projection) {
 		case kCCDirectorProjection2D:
@@ -188,7 +221,7 @@ CGFloat	__ccContentScaleFactor = 1;
 			kmGLLoadIdentity();
 
 			kmMat4 orthoMatrix;
-			kmMat4OrthographicProjection(&orthoMatrix, 0, size.width / CC_CONTENT_SCALE_FACTOR(), 0, size.height / CC_CONTENT_SCALE_FACTOR(), -1024, 1024 );
+			kmMat4OrthographicProjection(&orthoMatrix, 0, sizePoint.width, 0, sizePoint.height, -1024, 1024 );
 			kmGLMultMatrix( &orthoMatrix );
 
 			kmGLMatrixMode(KM_GL_MODELVIEW);
@@ -205,7 +238,7 @@ CGFloat	__ccContentScaleFactor = 1;
 			kmGLLoadIdentity();
 
 			// issue #1334
-			kmMat4PerspectiveProjection( &matrixPerspective, 60, (GLfloat)size.width/size.height, 0.1f, zeye*2);
+			kmMat4PerspectiveProjection( &matrixPerspective, 60, (GLfloat)sizePoint.width/sizePoint.height, 0.1f, zeye*2);
 //			kmMat4PerspectiveProjection( &matrixPerspective, 60, (GLfloat)size.width/size.height, 0.1f, 1500);
 
 			kmGLMultMatrix(&matrixPerspective);
@@ -263,10 +296,11 @@ CGFloat	__ccContentScaleFactor = 1;
 	if( scaleFactor != __ccContentScaleFactor ) {
 
 		__ccContentScaleFactor = scaleFactor;
-		winSizeInPixels_ = CGSizeMake( winSizeInPoints_.width * scaleFactor, winSizeInPoints_.height * scaleFactor );
 
 		if( view_ )
 			[self updateContentScaleFactor];
+
+		[self reshapeProjection:[view_ bounds].size];
 
 		// update projection
 		[self setProjection:projection_];
@@ -311,8 +345,12 @@ CGFloat	__ccContentScaleFactor = 1;
 // overriden, don't call super
 -(void) reshapeProjection:(CGSize)size
 {
-	winSizeInPoints_ = [view_ bounds].size;
-	winSizeInPixels_ = CGSizeMake(winSizeInPoints_.width * __ccContentScaleFactor, winSizeInPoints_.height *__ccContentScaleFactor);
+	CGSize nativeViewSize = [view_ bounds].size;
+	if (!CGSizeEqualToSize(size, CGSizeZero))
+		nativeViewSize = size;
+
+	winSizeInPoints_ = DBLegacyVisibleSizeForViewSize(nativeViewSize);
+	winSizeInPixels_ = DBViewportSizeInPixelsForView((CCGLView *)view_);
 
 	[self setProjection:projection_];
 }
@@ -321,18 +359,24 @@ CGFloat	__ccContentScaleFactor = 1;
 
 -(CGPoint)convertToGL:(CGPoint)uiPoint
 {
-	CGSize s = winSizeInPoints_;
-	float newY = s.height - uiPoint.y;
+	CGSize viewSize = [view_ bounds].size;
+	CGSize visibleSize = winSizeInPoints_;
+	if (viewSize.width <= 0.0f || viewSize.height <= 0.0f)
+		return CGPointZero;
 
-	return ccp( uiPoint.x, newY );
+	return ccp(uiPoint.x / viewSize.width * visibleSize.width,
+			   (1.0f - (uiPoint.y / viewSize.height)) * visibleSize.height);
 }
 
 -(CGPoint)convertToUI:(CGPoint)glPoint
 {
-	CGSize winSize = winSizeInPoints_;
-	int oppositeY = winSize.height - glPoint.y;
+	CGSize viewSize = [view_ bounds].size;
+	CGSize visibleSize = winSizeInPoints_;
+	if (visibleSize.width <= 0.0f || visibleSize.height <= 0.0f)
+		return CGPointZero;
 
-	return ccp(glPoint.x, oppositeY);
+	return ccp(glPoint.x / visibleSize.width * viewSize.width,
+			   (1.0f - (glPoint.y / visibleSize.height)) * viewSize.height);
 }
 
 -(void) end
@@ -353,11 +397,10 @@ CGFloat	__ccContentScaleFactor = 1;
 		[super setView:view];
 
 		if( view ) {
-			// set size
-			winSizeInPixels_ = CGSizeMake(winSizeInPoints_.width * __ccContentScaleFactor, winSizeInPoints_.height *__ccContentScaleFactor);
-
 			if( __ccContentScaleFactor != 1 )
 				[self updateContentScaleFactor];
+
+			[self reshapeProjection:[view bounds].size];
 
 			[view setTouchDelegate: touchDispatcher_];
 			[touchDispatcher_ setDispatchEvents: YES];

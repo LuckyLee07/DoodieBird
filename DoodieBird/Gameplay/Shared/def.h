@@ -1,9 +1,9 @@
-﻿//
+//
 //  def.h
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 //
 
 #ifndef DoodieBird_def_h

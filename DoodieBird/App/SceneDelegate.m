@@ -41,6 +41,28 @@ willConnectToSession:(UISceneSession *)session
         return;
     }
     [appController configureMainInterfaceInWindow:self.window];
+    [appController refreshViewportForCurrentWindow];
+
+    UIViewController *rootViewController = self.window.rootViewController;
+    if (rootViewController != nil)
+    {
+        [rootViewController setNeedsUpdateOfSupportedInterfaceOrientations];
+    }
+
+    if (@available(iOS 16.0, *))
+    {
+        UIWindowSceneGeometryPreferencesIOS *preferences =
+            [[[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape] autorelease];
+        [(UIWindowScene *)scene requestGeometryUpdateWithPreferences:preferences
+                                                       errorHandler:^(NSError *error) {
+            (void)error;
+            [[self appController] refreshViewportForCurrentWindow];
+        }];
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self appController] refreshViewportForCurrentWindow];
+    });
 }
 
 - (void)sceneDidDisconnect:(UIScene *)scene
@@ -53,6 +75,7 @@ willConnectToSession:(UISceneSession *)session
 {
     (void)scene;
     AppController *appController = [self appController];
+    [appController refreshViewportForCurrentWindow];
     [appController sceneDidBecomeActive];
 }
 

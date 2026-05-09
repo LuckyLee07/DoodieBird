@@ -3,7 +3,7 @@
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 //
 
 #import "SelectLevelScene.h"
@@ -12,6 +12,7 @@
 #import "LevelManager.h"
 #import "DefaultFile.h"
 #import "def.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 @implementation SelectLevelLayer
 
@@ -22,27 +23,26 @@
 	{
         //大关的数据
         m_nBigLevel = [[LevelManager sharedLevelMannger] GetBigLevel];
+        m_winSize = [CCDirector sharedDirector].winSize;
         
         CCSprite *sp = nil;
         int nBigLevel = [[LevelManager sharedLevelMannger] GetBigLevel];
         switch (nBigLevel) {
             case 1:
-                sp = [CCSprite spriteWithFile:@"LevelSenceBk1.png"];
+                sp = [CCSprite spriteWithFile:DBWideAssetName(@"LevelSenceBk1.png", m_winSize)];
                 break;
             case 2:
-                sp = [CCSprite spriteWithFile:@"LevelSenceBk2.png"];
+                sp = [CCSprite spriteWithFile:DBWideAssetName(@"LevelSenceBk2.png", m_winSize)];
                 break;
             case 3:
-                sp = [CCSprite spriteWithFile:@"LevelSenceBk3.png"];
+                sp = [CCSprite spriteWithFile:DBWideAssetName(@"LevelSenceBk3.png", m_winSize)];
                 break;
                 
             default:
                 break;
         }
-		sp.anchorPoint = CGPointZero;
+        DBLayoutCoverSprite(sp, m_winSize);
 		[self addChild:sp z:0 tag:1];
-        
-         m_winSize = [CCDirector sharedDirector].winSize;
         
         CCSprite* spSelectChapter = [CCSprite spriteWithFile:@"SelectCommon.png"];
         spSelectChapter.position = ccp(m_winSize.width/2 , m_winSize.height - 60);
@@ -53,19 +53,20 @@
         [self addChild:spSelectTitle];
         
         //Add by zhengxf about "加入选关的概念" 2012-8-1 --------begin------- 
+        const NSInteger columns = 5;
+        const CGFloat spacingX = DBLayoutValue(m_winSize, 75.0f);
+        const CGFloat spacingY = DBLayoutValue(m_winSize, 70.0f);
+        const CGFloat rowWidth = spacingX * (columns - 1);
+        const CGFloat startX = (m_winSize.width - rowWidth) * 0.5f;
+        const CGFloat startY = m_winSize.height * 0.5f + spacingY * 0.5f - DBLayoutValue(m_winSize, 15.0f);
+
         for(int i=0; i< 10; i++)
         {
             CGPoint pt;
-            if(i < 5)
-            {
-                pt.x = 100 + i* 75;
-                pt.y =180;
-            }
-            else 
-            {
-                pt.x = 100 + (i - 5) * 75;
-                pt.y =180 - 70;
-            }
+            NSInteger column = i % columns;
+            NSInteger row = i / columns;
+            pt.x = startX + column * spacingX;
+            pt.y = startY - row * spacingY;
             StarButton* BtFrist = [StarButton node];
             
             [BtFrist SetTarget:self :@selector(newGame:)];
@@ -97,7 +98,7 @@
 		CCMenuItemSprite *ReturnCook = [CCMenuItemSprite itemWithNormalSprite:ReturnNormal selectedSprite:ReturnSelected target:self selector:@selector(Return:)];
         ReturnCook.tag = 100;
 		CCMenu *menuReturn = [CCMenu menuWithItems: ReturnCook, nil];
-		[menuReturn setPosition:ccp(40,20)];
+		[menuReturn setPosition:ccp(65,35)];
 		[self addChild: menuReturn z:1 tag:GAME_RETURN];
 		//返回 －－－－end-----------
     }

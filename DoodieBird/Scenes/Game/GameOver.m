@@ -3,7 +3,7 @@
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 //
 
 #import "GameOver.h"
@@ -12,6 +12,7 @@
 #import "LevelManager.h"
 #import "MusicMannger.h"
 #import "DefaultFile.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 //Add by zhengxf about "障碍物介绍" 2012-9-3 ------begin------
 @implementation Introduce : CCLayer
@@ -38,7 +39,8 @@
     {
         m_spObstruct = [CCSprite spriteWithFile:[NSString stringWithFormat:@"Introduce_%d.png", nLevelIndex]];
     }
-    m_spObstruct.position = ccp(m_winSize.width/2, m_winSize.height * 0.5);
+    m_spObstruct.position = DBLayoutPoint(m_winSize, 240.0f, 160.0f);
+    m_spObstruct.scale = DBLayoutScale(m_winSize);
     [self addChild:m_spObstruct z:0 tag:1];
 }
 
@@ -49,7 +51,8 @@
     {
         [self removeChild:m_spObstruct cleanup:YES];
         m_spObstruct = [CCSprite spriteWithFile:[NSString stringWithFormat:@"Introduce_%d.png", m_nIndex]];
-        m_spObstruct.position = ccp(m_winSize.width/2, m_winSize.height * 0.5);
+        m_spObstruct.position = DBLayoutPoint(m_winSize, 240.0f, 160.0f);
+        m_spObstruct.scale = DBLayoutScale(m_winSize);
         [self addChild:m_spObstruct z:0 tag:1];
         m_nIndex = 0;
     }
@@ -76,8 +79,9 @@
     if(self)
     {
        winSize = [CCDirector sharedDirector].winSize;
-        CCSprite* m_BkGroundB1 = [CCSprite spriteWithFile:@"GameOverBk.png"];
-        m_BkGroundB1.position = ccp(winSize.width/2, winSize.height * 0.5);
+        const CGFloat layoutScale = DBLayoutScale(winSize);
+        CCSprite* m_BkGroundB1 = [CCSprite spriteWithFile:DBWideAssetName(@"GameOverBk.png", winSize)];
+        DBLayoutCoverSprite(m_BkGroundB1, winSize);
         [self addChild:m_BkGroundB1 z:0 tag:1];
         
         m_nAddBean = 0;
@@ -86,13 +90,15 @@
         //Add by zhengxf about "游戏标题" 2012-8-15 -------begin------
         //游戏标题
         CCSprite* BkTitle = [CCSprite spriteWithFile:@"GameOver_BkTitle.png"];
-        BkTitle.position = ccp(winSize.width/2, 290);
+        BkTitle.position = DBLayoutPoint(winSize, 240.0f, 290.0f);
+        BkTitle.scale = layoutScale;
         [self addChild:BkTitle z:0 tag:1];
         //Add by zhengxf about "游戏标题" 2012-8-15 -------end------
         
         //加入豆子的图标 2012-8-16 --------begin------
         CCSprite* BkBean = [CCSprite spriteWithFile:@"GameOver_Bean.png"];
-        BkBean.position = ccp(25, 24);
+        BkBean.position = DBLayoutPoint(winSize, 25.0f, 24.0f);
+        BkBean.scale = layoutScale;
         [self addChild:BkBean z:0 tag:1];
         //加入豆子的图标 2012-8-16 --------end------
     }
@@ -112,9 +118,9 @@
     {
         BkIcon = [CCSprite spriteWithFile:@"GameOver_FailIoc.png"];
     }
-    BkIcon.position = ccp(130, winSize.height * 0.5-5);
+    BkIcon.position = DBLayoutPoint(winSize, 130.0f, 155.0f);
     [self addChild:BkIcon z:0 tag:1];
-    BkIcon.scale = 4.0;
+    BkIcon.scale = 4.0f * DBLayoutScale(winSize);
     id pIconAction = [[AnimationDelegate shareAnimationDelegate] GameOverIcon:self Function:@selector(IconAction:)];
     [BkIcon runAction:pIconAction];
 }
@@ -141,10 +147,12 @@
     
     //显示游戏图表
     [self performSelector:@selector(ShowIcon:) withObject:nil  afterDelay:0.2f];
+    const CGFloat layoutScale = DBLayoutScale(winSize);
     
     //Add by zhengxf about "小熊" 2012-8-15 ----begin----
     CCSprite* pBear = [CCSprite spriteWithFile:@"Bear.png"];
-    pBear.position = ccp(120, 290);
+    pBear.position = DBLayoutPoint(winSize, 120.0f, 290.0f);
+    pBear.scale = layoutScale;
     [self addChild:pBear z:0 tag:1];
     
     id   BearAction1  = nil;
@@ -159,7 +167,8 @@
     [pBear runAction:BearAction1];
     
     CCSprite* pBear2 = [CCSprite spriteWithFile:@"Bear.png"];
-    pBear2.position = ccp(360, 290);
+    pBear2.position = DBLayoutPoint(winSize, 360.0f, 290.0f);
+    pBear2.scale = layoutScale;
     [self addChild:pBear2 z:0 tag:1];
     [pBear2 setFlipX:true];
     id   BearAction2 = nil;
@@ -209,6 +218,7 @@
     sprintf(strNum, "%d",score);
     NSUInteger len = strlen(strNum);
     NSString* strName  = nil;
+    const CGFloat layoutScale = DBLayoutScale(winSize);
     for (NSUInteger idx = 0; idx < len; idx++) 
     {
         int nNumber = strNum[idx] - '0';
@@ -217,11 +227,12 @@
         switch (nType) 
         {
             case 1:
-                sp.position = ccp(pt.x + 16 * idx, pt.y);
-                sp.scale = 0.7;
+                sp.position = DBLayoutPoint(winSize, pt.x + 16.0f * idx, pt.y);
+                sp.scale = layoutScale * 0.7f;
                 break;
             case 2:
-                sp.position = ccp(pt.x + 21 * idx, pt.y);
+                sp.position = DBLayoutPoint(winSize, pt.x + 21.0f * idx, pt.y);
+                sp.scale = layoutScale;
                 break;
             default:
                 break;
@@ -307,8 +318,8 @@
     if(m_nStartIndex < m_nStar)
     {
         CCSprite* pStar = [CCSprite spriteWithFile:@"GameOver_Star.png"];
-        pStar.position = ccp(291 + m_nStartIndex*63, 156);
-        pStar.scale = 0.5;
+        pStar.position = DBLayoutPoint(winSize, 291.0f + m_nStartIndex * 63.0f, 156.0f);
+        pStar.scale = DBLayoutScale(winSize) * 0.5f;
         //Add by zhengxf about "星星的声音" 2012-9-6 -------begin--------
         MusicMannger* pMusicMgr = [MusicMannger sharedMusicMannger];
         if(pMusicMgr)
@@ -331,6 +342,7 @@
 
 -(void) ShowUIButton:(int) nIndex
 {
+    const CGFloat layoutScale = DBLayoutScale(winSize);
     //总豆子数
     [self ReMoveNumber:(m_nBean - m_nAddBean) :2];
     [self ShowScore:m_nBean :ccp(58, 22) :2];
@@ -341,7 +353,8 @@
     CCSprite *ShopSelected = [CCSprite spriteWithFile:@"MoneySel.png"];
     CCMenuItemSprite *ShopGame = [CCMenuItemSprite itemWithNormalSprite:ShopNormal selectedSprite:ShopSelected target:self selector:@selector(ShowShop:)];
     CCMenu *menuShop = [CCMenu menuWithItems: ShopGame, nil];
-    [menuShop setPosition:ccp(250, -50)];
+    [menuShop setPosition:DBLayoutPoint(winSize, 250.0f, -50.0f)];
+    menuShop.scale = layoutScale;
     //[self addChild: menuShop z:1 tag:1];
     //[CCCallFuncN actionWithTarget:self selector:@selector(HawkMove:)],
     //[menuShop  runAction:[CCSequence actions:
@@ -353,10 +366,11 @@
     CCSprite *ReturnSelected = [CCSprite spriteWithFile:@"ReturnLevelSel.png"];
     CCMenuItemSprite *ReturnGame = [CCMenuItemSprite itemWithNormalSprite:ReturnNormal selectedSprite:ReturnSelected target:self selector:@selector(ShowChapter:)];
     CCMenu *menuReturn = [CCMenu menuWithItems: ReturnGame, nil];
-    [menuReturn setPosition:ccp(310, -50)];
+    [menuReturn setPosition:DBLayoutPoint(winSize, 310.0f, -50.0f)];
+    menuReturn.scale = layoutScale;
     [self addChild: menuReturn z:1 tag:2];
     [menuReturn  runAction:[CCSequence actions:
-                            [CCMoveBy actionWithDuration:0.4 position:ccp(0, 80)],
+                            [CCMoveBy actionWithDuration:0.4 position:DBLayoutOffset(winSize, 0.0f, 80.0f)],
                             nil]];
     
     //重新开始的按钮
@@ -364,10 +378,11 @@
     CCSprite *restartSelected = [CCSprite spriteWithFile:@"GameOverReturnSel.png"];
     CCMenuItemSprite *restartGame = [CCMenuItemSprite itemWithNormalSprite:restartNormal selectedSprite:restartSelected target:self selector:@selector(GameContinue:)];
     CCMenu *menurestart = [CCMenu menuWithItems: restartGame, nil];
-    [menurestart setPosition:ccp(372, -50)];
+    [menurestart setPosition:DBLayoutPoint(winSize, 372.0f, -50.0f)];
+    menurestart.scale = layoutScale;
     [self addChild: menurestart z:1 tag:2];
     [menurestart  runAction:[CCSequence actions:
-                             [CCMoveBy actionWithDuration:0.4 position:ccp(0, 80)],
+                             [CCMoveBy actionWithDuration:0.4 position:DBLayoutOffset(winSize, 0.0f, 80.0f)],
                              nil]];
     
     //下一关的按钮
@@ -375,7 +390,8 @@
     CCSprite *NextSelected = [CCSprite spriteWithFile:@"GameOver_Conturn1.png"];
     CCMenuItemSprite *NextGame = [CCMenuItemSprite itemWithNormalSprite:NextNormal selectedSprite:NextSelected target:self selector:@selector(GameNext:)];
     CCMenu *menuNext = [CCMenu menuWithItems: NextGame, nil];
-    [menuNext setPosition:ccp(437, -50)];
+    [menuNext setPosition:DBLayoutPoint(winSize, 437.0f, -50.0f)];
+    menuNext.scale = layoutScale;
     [self addChild: menuNext z:1 tag:10];
     if(!m_bSuccess)
     {
@@ -424,7 +440,7 @@
             [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:pKey];
         }
         [menuNext  runAction:[CCSequence actions:
-                              [CCMoveBy actionWithDuration:0.4 position:ccp(0, 80)],
+                              [CCMoveBy actionWithDuration:0.4 position:DBLayoutOffset(winSize, 0.0f, 80.0f)],
                               [CCCallFuncN actionWithTarget:self selector:@selector(ButMoveEndAction:)],
                               nil]];
     }

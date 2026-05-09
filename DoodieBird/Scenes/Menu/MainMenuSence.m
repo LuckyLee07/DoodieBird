@@ -10,6 +10,7 @@
 #import "SenceManager.h"
 #import "MusicMannger.h"
 #import "DefaultFile.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 @implementation SysMenu
 - (id) init
@@ -29,15 +30,17 @@
         m_bMusicOpen = [defaultFile GetBoolForKey:MUSIC_IS_OPEN];
         [[MusicMannger sharedMusicMannger] SetIsOpenMusic:m_bMusicOpen];
         m_winSize = [CCDirector sharedDirector].winSize;
+        const CGFloat layoutScale = DBLayoutScale(m_winSize);
         
-		CCSprite *sp = [CCSprite spriteWithFile:@"MainBk.png"];
-		sp.anchorPoint = CGPointZero;
+		CCSprite *sp = [CCSprite spriteWithFile:DBWideAssetName(@"MainBk.png", m_winSize)];
+        DBLayoutCoverSprite(sp, m_winSize);
 		[self addChild:sp z:0 tag:1];
 		[CCMenuItemFont setFontName:@"Marker Felt"];
 		[CCMenuItemFont setFontSize:25];
 
         CCSprite* spTitle = [CCSprite spriteWithFile:@"MainMenuTitle.png"];
-        spTitle.position = ccp(m_winSize.width /2 + 20, m_winSize.height - 60);
+        spTitle.position = DBLayoutPoint(m_winSize, 260.0f, 260.0f);
+        spTitle.scale = layoutScale;
         [self addChild:spTitle z:0 tag:1];
 
         
@@ -47,7 +50,8 @@
         
 		CCMenuItemSprite *StartCook = [CCMenuItemSprite itemWithNormalSprite:StartNormal selectedSprite:StartSelected target:self selector:@selector(newGame:)];
 		CCMenu *menuStart = [CCMenu menuWithItems: StartCook, nil];
-		[menuStart setPosition:ccp(320,160)];
+		[menuStart setPosition:DBLayoutPoint(m_winSize, 320.0f, 160.0f)];
+        menuStart.scale = layoutScale;
 		[self addChild: menuStart z:1 tag:START_ITEM];
 		//开始 －－－－end-----------
         
@@ -68,7 +72,8 @@
 
 		CCMenuItemSprite *MusicGame = [CCMenuItemSprite itemWithNormalSprite:MusicNormal selectedSprite:MusicSelected target:self selector:@selector(MusicGame:)];
 		CCMenu *menuMusic = [CCMenu menuWithItems: MusicGame, nil];
-		[menuMusic setPosition:ccp(30, m_winSize.height - 20)];
+		[menuMusic setPosition:DBLayoutPoint(m_winSize, 30.0f, 300.0f)];
+        menuMusic.scale = layoutScale;
 		[self addChild: menuMusic z:1 tag:MUSIC_ITEM];
         
         //语言
@@ -101,6 +106,7 @@
 		CCMenuItemSprite *SetGameItem = [CCMenuItemSprite itemWithNormalSprite:SetNormal selectedSprite:SetSelected target:self selector:@selector(SetGame:)];
 		CCMenu *menuSet = [CCMenu menuWithItems: SetGameItem, nil];
 		[menuSet setPosition:ccp(menuMusic.position.x, menuMusic.position.y)];
+        menuSet.scale = layoutScale;
 		[self addChild: menuSet z:1 tag:SET_ITEM];
 
         //商场的按钮
@@ -108,7 +114,8 @@
 		CCSprite *ShopSelected = [CCSprite spriteWithFile:@"GameShop.png"];
 		CCMenuItemSprite *ShopGame = [CCMenuItemSprite itemWithNormalSprite:ShopNormal selectedSprite:ShopSelected target:self selector:@selector(ShopGame:)];
 		CCMenu *menuShop = [CCMenu menuWithItems: ShopGame, nil];
-		[menuShop setPosition:ccp(80, m_winSize.height - 20)];
+		[menuShop setPosition:DBLayoutPoint(m_winSize, 80.0f, 300.0f)];
+        menuShop.scale = layoutScale;
 		//[self addChild: menuShop z:1 tag:2];
         
         //GameCenter
@@ -166,7 +173,7 @@
             CCMenu * menuItem = (CCMenu*)[self getChildByTag:  MUSIC_ITEM +i];
             if(menuItem)
             {
-                id  pAction = [CCMoveBy actionWithDuration:0.3  position:ccp(0, -40 * (i+1))];
+                id  pAction = [CCMoveBy actionWithDuration:0.3  position:DBLayoutOffset(m_winSize, 0.0f, -40.0f * (i+1))];
                 if(m_bSetGame)
                 {
                     if(i == 0)

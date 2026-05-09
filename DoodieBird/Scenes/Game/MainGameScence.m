@@ -3,7 +3,7 @@
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 
 #import "MainGameScence.h"
 #import "CCParallaxNode-Extras.h"
@@ -17,6 +17,7 @@
 #import "GameOver.h"
 #import "MusicMannger.h"
 #import "PauseGame.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 static void MGInvalidateTimer(NSTimer **timer)
 {
@@ -26,6 +27,132 @@ static void MGInvalidateTimer(NSTimer **timer)
         [*timer release];
         *timer = nil;
     }
+}
+
+static inline CGFloat MGVisibleWidth(CGSize winSize)
+{
+    return winSize.width;
+}
+
+static inline CGFloat MGVisibleRightEdge(CGSize winSize, CGFloat spriteWidth)
+{
+    return MGVisibleWidth(winSize) + (spriteWidth * 0.5f) - 0.1f;
+}
+
+static inline CGPoint MGUIPoint(CGSize winSize, CGFloat x, CGFloat y)
+{
+    return DBLayoutPoint(winSize, x, y);
+}
+
+static inline CGPoint MGSnappedPoint(CGPoint point)
+{
+    return ccp(roundf(point.x), roundf(point.y));
+}
+
+static inline void MGPrepareScrollingSprite(CCMyMapSprite *sprite, CGPoint position)
+{
+    if (sprite == nil)
+    {
+        return;
+    }
+
+    [sprite.texture setAliasTexParameters];
+    sprite.position = MGSnappedPoint(position);
+}
+
+static const CGFloat kMGForegroundOverlap = 40.0f;
+static const NSInteger kMGHelpMaskTag = 9001;
+static const NSInteger kMGHelpSpriteTag = 9002;
+
+static CCMyMapSprite *MGRightmostSprite(CCLayer *layer, NSInteger baseTag, NSInteger count, NSInteger excludedTag)
+{
+    CCMyMapSprite *rightmostSprite = nil;
+    CGFloat rightmostX = -CGFLOAT_MAX;
+
+    for (NSInteger index = 0; index < count; index++)
+    {
+        const NSInteger tag = baseTag + index;
+        if (tag == excludedTag)
+        {
+            continue;
+        }
+
+        CCMyMapSprite *sprite = (CCMyMapSprite *)[layer getChildByTag:tag];
+        if (sprite != nil && sprite.position.x > rightmostX)
+        {
+            rightmostX = sprite.position.x;
+            rightmostSprite = sprite;
+        }
+    }
+
+    return rightmostSprite;
+}
+
+static CGPoint MGPositionAfterRightmost(CCLayer *layer,
+                                        NSInteger baseTag,
+                                        NSInteger count,
+                                        NSInteger excludedTag,
+                                        CGSize spriteSize,
+                                        CGFloat spacingAdjustment,
+                                        CGFloat y)
+{
+    CCMyMapSprite *rightmostSprite = MGRightmostSprite(layer, baseTag, count, excludedTag);
+    if (rightmostSprite == nil)
+    {
+        return ccp(spriteSize.width * 0.5f, y);
+    }
+
+    return ccp(rightmostSprite.position.x + (rightmostSprite.contentSize.width * 0.5f) + (spriteSize.width * 0.5f) + spacingAdjustment,
+               y);
+}
+
+static void MGEnsureHelpMask(CCLayer *layer, CGSize winSize)
+{
+    if ([layer getChildByTag:kMGHelpMaskTag] != nil)
+    {
+        return;
+    }
+
+    CCLayerColor *mask = [CCLayerColor layerWithColor:ccc4(0, 0, 0, 140)
+                                                 width:winSize.width
+                                                height:winSize.height];
+    mask.position = CGPointZero;
+    [layer addChild:mask z:4 tag:kMGHelpMaskTag];
+}
+
+static void MGShowHelpSprite(CCLayer *layer, CCSprite **helpSprite, NSString *filename, CGSize winSize)
+{
+    MGEnsureHelpMask(layer, winSize);
+
+    if (*helpSprite != nil)
+    {
+        [layer removeChild:*helpSprite cleanup:YES];
+        *helpSprite = nil;
+    }
+
+    CCSprite *sprite = [CCSprite spriteWithFile:filename];
+    if (sprite == nil)
+    {
+        return;
+    }
+
+    const CGFloat widthScale = (winSize.width * 0.92f) / sprite.contentSize.width;
+    const CGFloat heightScale = (winSize.height * 0.92f) / sprite.contentSize.height;
+    sprite.scale = MIN(widthScale, heightScale);
+    sprite.position = ccp(winSize.width * 0.5f, winSize.height * 0.5f);
+    [layer addChild:sprite z:5 tag:kMGHelpSpriteTag];
+    *helpSprite = sprite;
+}
+
+static void MGHideHelpOverlay(CCLayer *layer, CCSprite **helpSprite)
+{
+    if (*helpSprite != nil)
+    {
+        [layer removeChild:*helpSprite cleanup:YES];
+        *helpSprite = nil;
+    }
+
+    [layer removeChildByTag:kMGHelpMaskTag cleanup:YES];
 }
 
 @implementation MyObstacle
@@ -100,7 +227,6 @@ static void MGInvalidateTimer(NSTimer **timer)
         int nLevelIndex = (m_nBigLevel - 1)*10 + m_nSmallLevel -1;
         //m_nLeveScore = LevelAllScore[nLevelIndex];
         m_nLeveScore = 0;
-        m_nLevelLen = 480 * (LevelLen[nLevelIndex] + 2);
         
         //Add by zhengxf about "加载数据缓存" 2012-7-19 --------begin----------
         //豆子的数据缓存
@@ -123,17 +249,19 @@ static void MGInvalidateTimer(NSTimer **timer)
         m_nLeftSceneDown = false;
         m_nRithtSceneDown = false;
         m_winSize = [CCDirector sharedDirector].winSize;
+        m_nLevelLen = MGVisibleWidth(m_winSize) * (LevelLen[nLevelIndex] + 2);
         
         //添加背景图  2012-7-3 ------begin------
         //后背景图
         
-        m_BkGroundB1 = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"SceneB_%d.png",m_nBigLevel]];
+        NSString *backgroundName = DBWideAssetName([NSString stringWithFormat:@"SceneB_%d.png", m_nBigLevel], m_winSize);
+        m_BkGroundB1 = [CCMyMapSprite spriteWithFile:backgroundName];
         //m_BkGroundB1 = [CCMyMapSprite spriteWithFile:@"SceneB.png"];
         [m_BkGroundB1.texture setAliasTexParameters];
         m_BkGroundB1.m_nMapType = 3;
         m_BkGroundB1.m_fMoveRate = 0.6;
-        //m_BkGroundB1.scale= 2.0;
-        m_BkGroundB1.position = ccp(m_winSize.width/2, m_winSize.height * 0.5 + 10);
+        DBLayoutCoverSprite(m_BkGroundB1, m_winSize);
+        m_BkGroundB1.position = ccp(m_BkGroundB1.position.x, m_BkGroundB1.position.y + DBLayoutValue(m_winSize, 10.0f));
         [self addChild:m_BkGroundB1 z:0 tag:MAP_BK_B1];
         
         //Add by zhengxf about "按钮和信息显示条" 2012-7-10 ------begin--------
@@ -146,19 +274,19 @@ static void MGInvalidateTimer(NSTimer **timer)
 		CCMenuItemSprite *StopGame = [CCMenuItemSprite itemWithNormalSprite:StopNormal selectedSprite:StopSelected target:self selector:@selector(StopGame:)];
         
 		CCMenu *menuStop = [CCMenu menuWithItems: StopGame, nil];
-		[menuStop setPosition:ccp(20,300)];
+		[menuStop setPosition:MGUIPoint(m_winSize, 20.0f, 300.0f)];
 		//[menu setPosition:ccp(480 - 50, 320 - 30)];
 		[self addChild: menuStop z:2 tag:0];
 		//暂停 －－－－end-----------
         
         //进度条 --------begin------
         CCSprite *ProgressNormal = [CCSprite spriteWithFile:@"progress.png"];
-        ProgressNormal.position = ccp(menuStop.position.x + 120, menuStop.position.y);
+        ProgressNormal.position = ccpAdd(menuStop.position, DBLayoutOffset(m_winSize, 120.0f, 0.0f));
         [self addChild:ProgressNormal z:2 tag:0];
         m_nProgressLen = ProgressNormal.contentSize.width - 50;
         
         m_spProgress = [CCSprite spriteWithFile:@"BridProgress.png"];
-        m_spProgress.position = ccp(menuStop.position.x + 90, menuStop.position.y + 8);
+        m_spProgress.position = ccpAdd(menuStop.position, DBLayoutOffset(m_winSize, 90.0f, 8.0f));
         //m_spProgress.blendFunc = (ccBlendFunc){GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR};
         id HunterAction = [[AnimationDelegate shareAnimationDelegate] BridProgress];
         [m_spProgress runAction:HunterAction];
@@ -167,7 +295,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         
         //便便更换 --------begin-------
         CCSprite *ArrowsNormal = [CCSprite spriteWithFile:@"SelectArrows.png"];
-        ArrowsNormal.position = ccp(m_winSize.width - ArrowsNormal.contentSize.width/2 - 10, menuStop.position.y - 20);
+        ArrowsNormal.position = MGUIPoint(m_winSize, kDBDesignWidth - ArrowsNormal.contentSize.width * 0.5f - 10.0f, 280.0f);
         [self addChild:ArrowsNormal z:2 tag: SELEST_SHIT];
         
         m_RcChangeWeapon = [ArrowsNormal textureRect];
@@ -235,19 +363,20 @@ static void MGInvalidateTimer(NSTimer **timer)
         
         //游戏分数的显示 ------begin-------
         CCSprite *pGameScore = [CCSprite spriteWithFile:@"GameScore.png"];
-        pGameScore.position = ccp(m_winSize.width - pGameScore.contentSize.width/2 - 80, menuStop.position.y);
+        pGameScore.position = MGUIPoint(m_winSize, kDBDesignWidth - pGameScore.contentSize.width * 0.5f - 80.0f, 300.0f);
         [self addChild:pGameScore z:1 tag:0];
         //游戏分数的显示 ------end-------
         
         //游戏豆数的显示 ------begin-----
         CCSprite *pGameBean = [CCSprite spriteWithFile:@"GameOver_Bean.png"];
-        pGameBean.position = ccp(pGameScore.contentSize.width /2 - 25, pGameBean.contentSize.height/2+ 10);
+        pGameBean.position = ccp(DBLayoutOriginX(m_winSize) + pGameScore.contentSize.width * 0.5f - 25.0f,
+                                 pGameBean.contentSize.height * 0.5f + 10.0f);
         [self addChild:pGameBean z:1 tag:0];
         //游戏豆数的显示 ------end-----
         //Add by zhengxf about "按钮和信息显示条" 2012-7-10 ------end--------
         
-        m_pBeanPoint = ccp(45, 25);
-        m_pScorePoint = ccp(405, 300);;
+        m_pBeanPoint = MGUIPoint(m_winSize, 45.0f, 25.0f);
+        m_pScorePoint = MGUIPoint(m_winSize, 405.0f, 300.0f);
         
         m_BeanList = [[CCArray alloc] initWithCapacity:6];
         m_ScoreList = [[CCArray alloc] initWithCapacity:6];
@@ -331,6 +460,8 @@ static void MGInvalidateTimer(NSTimer **timer)
 
 -(void) InitScene  //加载场景
 {
+    const BOOL usesWideForeground = DBShouldUseWideAssets(m_winSize);
+
     //加载中景资源
     for(int i=0; i<3; i++)
     {
@@ -339,16 +470,19 @@ static void MGInvalidateTimer(NSTimer **timer)
         {
             if(0 == i)
             {
-                spTem.position = ccp(spTem.contentSize.width*0.5, m_winSize.height - spTem.contentSize.height*0.5  - 30);
+                MGPrepareScrollingSprite(spTem,
+                                         ccp(spTem.contentSize.width*0.5f, m_winSize.height - spTem.contentSize.height*0.5f  - 30.0f));
             }
             else
             {
-                int nTag = MAP_BK_M_INDEX + i -1;
-                CCMyMapSprite* pTem = (CCMyMapSprite*)[self getChildByTag:nTag];
-                if(pTem)
-                {
-                    spTem.position = ccp(pTem.position.x + pTem.contentSize.width, pTem.position.y);
-                }
+                MGPrepareScrollingSprite(spTem,
+                                         MGPositionAfterRightmost(self,
+                                                                  MAP_BK_M_INDEX,
+                                                                  i,
+                                                                  NSNotFound,
+                                                                  spTem.contentSize,
+                                                                  -kMGForegroundOverlap,
+                                                                  m_winSize.height - spTem.contentSize.height * 0.5f  - 30.0f));
             }
             spTem.m_nMapType = 4;
             spTem.m_fMoveRate = 2.0;
@@ -364,16 +498,19 @@ static void MGInvalidateTimer(NSTimer **timer)
         {
             if(0 == i)
             {
-                spTem.position = ccp(spTem.contentSize.width*0.5, m_winSize.height - spTem.contentSize.height*0.5 - 30);
+                MGPrepareScrollingSprite(spTem,
+                                         ccp(spTem.contentSize.width*0.5f, m_winSize.height - spTem.contentSize.height*0.5f - 30.0f));
             }
             else
             {
-                int nTag = MAP_BK_U_INDEX + i -1;
-                CCMyMapSprite* pTem = (CCMyMapSprite*)[self getChildByTag:nTag];
-                if(pTem)
-                {
-                    spTem.position = ccp(pTem.position.x + pTem.contentSize.width + 50, pTem.position.y);
-                }
+                MGPrepareScrollingSprite(spTem,
+                                         MGPositionAfterRightmost(self,
+                                                                  TREE_BK_INDEX,
+                                                                  i,
+                                                                  NSNotFound,
+                                                                  spTem.contentSize,
+                                                                  50.0f,
+                                                                  m_winSize.height - spTem.contentSize.height*0.5f - 30.0f));
             }
             spTem.m_nMapType = 4;
             if(4== i || 5 == i )
@@ -389,23 +526,30 @@ static void MGInvalidateTimer(NSTimer **timer)
         }
     }
     //添加前景下
-    for(int i=0; i<5; i++)
+    const int downLayerCount = usesWideForeground ? 2 : 6;
+    for(int i=0; i<downLayerCount; i++)
     {
-        CCMyMapSprite *spTem = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"SceneF_D_%d_%d.png",m_nBigLevel, i]];
+        NSString *downLayerName = usesWideForeground
+            ? [NSString stringWithFormat:@"SceneF_D_%d_wide.png", m_nBigLevel]
+            : [NSString stringWithFormat:@"SceneF_D_%d_%d.png", m_nBigLevel, i];
+        CCMyMapSprite *spTem = [CCMyMapSprite spriteWithFile:downLayerName];
         if(spTem)
         {
             if(0 == i)
             {
-                spTem.position = ccp(spTem.contentSize.width*0.5, spTem.contentSize.width*0.5 +17);
+                MGPrepareScrollingSprite(spTem,
+                                         ccp(spTem.contentSize.width * 0.5f, spTem.contentSize.height * 0.5f + 17.0f));
             }
             else
             {
-                int nTag = MAP_BK_D_INDEX + i -1;
-                CCMyMapSprite* pTem = (CCMyMapSprite*)[self getChildByTag:nTag];
-                if(pTem)
-                {
-                    spTem.position = ccp(pTem.position.x + pTem.contentSize.width, pTem.position.y);
-                }
+                MGPrepareScrollingSprite(spTem,
+                                         MGPositionAfterRightmost(self,
+                                                                  MAP_BK_D_INDEX,
+                                                                  i,
+                                                                  NSNotFound,
+                                                                  spTem.contentSize,
+                                                                  -kMGForegroundOverlap,
+                                                                  spTem.contentSize.height * 0.5f + 17.0f));
             }
             spTem.m_nMapType = 1;
             spTem.m_fMoveRate = FORWARD_MOVE_RATIO;
@@ -416,27 +560,34 @@ static void MGInvalidateTimer(NSTimer **timer)
     //Add by zhengxf "测试粒子效果" 2012-7-10 --------begin-------
     CCParticleSystem* particle = [CCParticleSystemQuad particleWithFile:@"Leaf4.plist"];
     particle.positionType = kCCPositionTypeFree; 
-    particle.position = ccp(240,250);
+    particle.position = MGUIPoint(m_winSize, 240.0f, 250.0f);
     [self addChild:particle z:0];
     //Add by zhengxf "测试粒子效果" 2012-7-10 --------end-------
     //添加前景上
-    for(int i=0; i<6; i++)
+    const int upperLayerCount = usesWideForeground ? 2 : 6;
+    for(int i=0; i<upperLayerCount; i++)
     {
-        CCMyMapSprite *spTem = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"SceneF_U_%d_%d.png",m_nBigLevel, i]];
+        NSString *upperLayerName = usesWideForeground
+            ? [NSString stringWithFormat:@"SceneF_U_%d_wide.png", m_nBigLevel]
+            : [NSString stringWithFormat:@"SceneF_U_%d_%d.png", m_nBigLevel, i];
+        CCMyMapSprite *spTem = [CCMyMapSprite spriteWithFile:upperLayerName];
         if(spTem)
         {
             if(0 == i)
             {
-                spTem.position = ccp(spTem.contentSize.width*0.5, m_winSize.height - spTem.contentSize.width*0.5+7);
+                MGPrepareScrollingSprite(spTem,
+                                         ccp(spTem.contentSize.width * 0.5f, m_winSize.height - spTem.contentSize.height * 0.5f + 7.0f));
             }
             else
             {
-                int nTag = MAP_BK_U_INDEX + i -1;
-                CCMyMapSprite* pTem = (CCMyMapSprite*)[self getChildByTag:nTag];
-                if(pTem)
-                {
-                    spTem.position = ccp(pTem.position.x + pTem.contentSize.width, pTem.position.y);
-                }
+                MGPrepareScrollingSprite(spTem,
+                                         MGPositionAfterRightmost(self,
+                                                                  MAP_BK_U_INDEX,
+                                                                  i,
+                                                                  NSNotFound,
+                                                                  spTem.contentSize,
+                                                                  0.0f,
+                                                                  m_winSize.height - spTem.contentSize.height * 0.5f + 7.0f));
             }
             spTem.m_nMapType = 4;
             spTem.m_fMoveRate = FORWARD_MOVE_RATIO;
@@ -546,7 +697,7 @@ static void MGInvalidateTimer(NSTimer **timer)
                 pBeanSprite.m_bTouch = false;
                 pBeanSprite.visible = false;
                 //pBeanSprite.position = ccp(pTem.m_nX * 0.5 + 480 + Level1[i].m_nOffset, pTem.m_nY * 0.5 );
-                pBeanSprite.position = ccp(pTem.m_nX * 0.5 + 480 + NodeList.pLevelList[i].m_nOffset, pTem.m_nY * 0.5 );
+                pBeanSprite.position = ccp(pTem.m_nX * 0.5f + MGVisibleWidth(m_winSize) + NodeList.pLevelList[i].m_nOffset, pTem.m_nY * 0.5f);
                 pBeanSprite.m_nType = pTem.m_nType;
                 pBeanSprite.anchorPoint = ccp(0.5, 0);
                 
@@ -611,7 +762,7 @@ static void MGInvalidateTimer(NSTimer **timer)
                 Hunter.m_bDead = NO;
                 Hunter.anchorPoint = ccp(0.5, 0);
                 //Hunter.position = ccp(960, 40);
-                if(Hunter.position.x >= 0 && Hunter.position.x <= 480)
+                if(Hunter.position.x >= 0 && Hunter.position.x <= MGVisibleWidth(m_winSize))
                 {
                     Hunter.visible = YES;
                     Hunter.m_bActionRun = YES;
@@ -653,14 +804,16 @@ static void MGInvalidateTimer(NSTimer **timer)
 {
     //m_winSize.width + m_spTree.contentSize.width
     m_spTree = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"TreeHole_tree%d.png",m_nBigLevel]];
-    m_spTree.position = ccp(m_winSize.width + m_spTree.contentSize.width, m_winSize.height - m_spTree.contentSize.height*0.5 - 30);
+    MGPrepareScrollingSprite(m_spTree,
+                             ccp(m_winSize.width + m_spTree.contentSize.width, m_winSize.height - m_spTree.contentSize.height*0.5f - 30.0f));
     m_spTree.m_nMapType = 7;
     m_spTree.m_fMoveRate = FORWARD_MOVE_RATIO;
     m_spTree.visible = false;
     [self addChild:m_spTree z:0 tag:0];
     
     m_spSmallTree = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"TreeHole_small%d.png",m_nBigLevel]];
-    m_spSmallTree.position = ccp(m_spTree.position.x + m_spTree.contentSize.width/2-20 ,m_spTree.position.y + 25);
+    MGPrepareScrollingSprite(m_spSmallTree,
+                             ccp(m_spTree.position.x + m_spTree.contentSize.width/2.0f - 20.0f ,m_spTree.position.y + 25.0f));
     m_spSmallTree.m_nMapType = 7;
     m_spSmallTree.m_fMoveRate = FORWARD_MOVE_RATIO;
     m_spSmallTree.visible = false;
@@ -668,7 +821,8 @@ static void MGInvalidateTimer(NSTimer **timer)
 
     
     m_spHole = [CCMyMapSprite spriteWithFile:[NSString stringWithFormat:@"TreeHole_hole%d.png",m_nBigLevel]];
-    m_spHole.position = ccp(m_spTree.position.x  + m_spTree.contentSize.width/2-50,m_spTree.position.y + 25);
+    MGPrepareScrollingSprite(m_spHole,
+                             ccp(m_spTree.position.x  + m_spTree.contentSize.width/2.0f - 50.0f,m_spTree.position.y + 25.0f));
     m_spHole.m_nMapType = 7;
     m_spHole.m_fMoveRate = FORWARD_MOVE_RATIO;
     m_spHole.visible = false;
@@ -856,7 +1010,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         {
             //m_bFrieDragon = true;
             m_spDragonFrie = [CCSprite spriteWithFile:@"GameOver_Bean.png"];
-            m_spDragonFrie.position = ccp(50, 40);
+            m_spDragonFrie.position = MGUIPoint(m_winSize, 50.0f, 40.0f);
             [self addChild:m_spDragonFrie z:1 tag:0];
             
             id FlightAction = [[AnimationDelegate shareAnimationDelegate] FrieDragon];
@@ -879,7 +1033,7 @@ static void MGInvalidateTimer(NSTimer **timer)
             //Add by zhengxf "测试粒子效果" 2012-7-10 --------end-------
             
             [m_spDragonFrie runAction:[CCSequence actions:
-                                   [CCMoveBy actionWithDuration:1.0 position:ccp(480, 0)],
+                                   [CCMoveBy actionWithDuration:1.0 position:ccp(MGVisibleWidth(m_winSize), 0)],
                                    [CCCallFuncN actionWithTarget:self selector:@selector(FrieDragonOver:)],
                                    nil]];
             //龙便便横屏飞行的动画
@@ -1028,7 +1182,7 @@ static void MGInvalidateTimer(NSTimer **timer)
                 CCMyBeanSprite* NodeMessage = [pNode.m_ObstacleList objectAtIndex:j];
                 if(NodeMessage)
                 {
-                    if(NodeMessage.position.x >= 0 && NodeMessage.position.x <= 480)
+                    if(NodeMessage.position.x >= 0 && NodeMessage.position.x <= MGVisibleWidth(m_winSize))
                     {
                         if(!NodeMessage.visible && !NodeMessage.m_bTouch)
                         {
@@ -1237,13 +1391,17 @@ static void MGInvalidateTimer(NSTimer **timer)
 }
 -(void) MoveTreeHole
 {
-    m_spTree.position = ccpAdd(m_spTree.position, ccp(-0.5 * m_spTree.m_fMoveRate, 0));
-    m_spSmallTree.position = ccpAdd(m_spSmallTree.position, ccp(-0.5 * m_spSmallTree.m_fMoveRate, 0));
-    m_spHole.position = ccpAdd(m_spHole.position, ccp(-0.5 * m_spHole.m_fMoveRate, 0));
+    m_spTree.position = MGSnappedPoint(ccpAdd(m_spTree.position, ccp(-0.5f * m_spTree.m_fMoveRate, 0.0f)));
+    m_spSmallTree.position = MGSnappedPoint(ccpAdd(m_spSmallTree.position, ccp(-0.5f * m_spSmallTree.m_fMoveRate, 0.0f)));
+    m_spHole.position = MGSnappedPoint(ccpAdd(m_spHole.position, ccp(-0.5f * m_spHole.m_fMoveRate, 0.0f)));
 }
 
 -(void) MoveMap
 {
+    const BOOL usesWideForeground = DBShouldUseWideAssets(m_winSize);
+    const int downLayerCount = usesWideForeground ? 2 : 6;
+    const int upperLayerCount = usesWideForeground ? 2 : 6;
+
     //计算地图移动的距离
     m_nNowLevelLen +=  0.5 * FORWARD_MOVE_RATIO;
     float nMove = m_nProgressLen * 4/m_nLevelLen;
@@ -1252,41 +1410,80 @@ static void MGInvalidateTimer(NSTimer **timer)
     for(int i=0; i< 3; i++)
     {
         CCMyMapSprite *backGround =(CCMyMapSprite*)[self getChildByTag:MAP_BK_M_INDEX + i];
-        backGround.position = ccpAdd(backGround.position, ccp(-0.5 * backGround.m_fMoveRate, 0));
+        if (backGround == nil)
+        {
+            continue;
+        }
+        backGround.position = MGSnappedPoint(ccpAdd(backGround.position, ccp(-0.5f * backGround.m_fMoveRate, 0.0f)));
         if(backGround.position.x <= -(backGround.contentSize.width* 0.5))
         {
-            backGround.position = ccp(512 + backGround.contentSize.width* 0.5 -0.1, m_winSize.height - backGround.contentSize.height*0.5  - 20);
+            backGround.position = MGSnappedPoint(MGPositionAfterRightmost(self,
+                                                                          MAP_BK_M_INDEX,
+                                                                          3,
+                                                                          MAP_BK_M_INDEX + i,
+                                                                          backGround.contentSize,
+                                                                          -kMGForegroundOverlap,
+                                                                          m_winSize.height - backGround.contentSize.height * 0.5f  - 30.0f));
         }
     }
     //移动前背景下
-    for(int i = 0; i<5; i++)
+    for(int i = 0; i<downLayerCount; i++)
     {
        CCMyMapSprite *backGround =(CCMyMapSprite*)[self getChildByTag:MAP_BK_D_INDEX + i];
-        backGround.position = ccpAdd(backGround.position, ccp(-0.5 * backGround.m_fMoveRate, 0));
+        if (backGround == nil)
+        {
+            continue;
+        }
+        backGround.position = MGSnappedPoint(ccpAdd(backGround.position, ccp(-0.5f * backGround.m_fMoveRate, 0.0f)));
         if(backGround.position.x <= -(backGround.contentSize.width* 0.5))
         {
-            backGround.position = ccp(480 + backGround.contentSize.width* 0.5 -0.1, backGround.contentSize.width*0.5 + 15);
+            backGround.position = MGSnappedPoint(MGPositionAfterRightmost(self,
+                                                                          MAP_BK_D_INDEX,
+                                                                          downLayerCount,
+                                                                          MAP_BK_D_INDEX + i,
+                                                                          backGround.contentSize,
+                                                                          -kMGForegroundOverlap,
+                                                                          backGround.contentSize.height * 0.5f + 17.0f));
         }
     }
     //移动前背景上
-    for(int i = 0; i<6; i++)
+    for(int i = 0; i<upperLayerCount; i++)
     {
         CCMyMapSprite *backGround =(CCMyMapSprite*)[self getChildByTag:MAP_BK_U_INDEX + i];
-        backGround.position = ccpAdd(backGround.position, ccp(-0.5 * backGround.m_fMoveRate, 0));
+        if (backGround == nil)
+        {
+            continue;
+        }
+        backGround.position = MGSnappedPoint(ccpAdd(backGround.position, ccp(-0.5f * backGround.m_fMoveRate, 0.0f)));
         if(backGround.position.x <= -(backGround.contentSize.width* 0.5))
         {
-
-            backGround.position = ccp(480 + backGround.contentSize.width* 0.5 -0.1, m_winSize.height - backGround.contentSize.width*0.5+5);
+            backGround.position = MGSnappedPoint(MGPositionAfterRightmost(self,
+                                                                          MAP_BK_U_INDEX,
+                                                                          upperLayerCount,
+                                                                          MAP_BK_U_INDEX + i,
+                                                                          backGround.contentSize,
+                                                                          0.0f,
+                                                                          m_winSize.height - backGround.contentSize.height * 0.5f + 7.0f));
         }
     }
     //移动树
     for(int i=0; i<6; i++)
     {
         CCMyMapSprite *backGround =(CCMyMapSprite*)[self getChildByTag:TREE_BK_INDEX + i];
-        backGround.position = ccpAdd(backGround.position, ccp(-0.5 * backGround.m_fMoveRate, 0));
+        if (backGround == nil)
+        {
+            continue;
+        }
+        backGround.position = MGSnappedPoint(ccpAdd(backGround.position, ccp(-0.5f * backGround.m_fMoveRate, 0.0f)));
         if(backGround.position.x <= -(backGround.contentSize.width* 0.5))
         {
-            backGround.position = ccp(480 + backGround.contentSize.width* 0.5 -0.1, m_winSize.height - backGround.contentSize.height*0.5 - 30);
+            backGround.position = MGSnappedPoint(MGPositionAfterRightmost(self,
+                                                                          TREE_BK_INDEX,
+                                                                          6,
+                                                                          TREE_BK_INDEX + i,
+                                                                          backGround.contentSize,
+                                                                          50.0f,
+                                                                          m_winSize.height - backGround.contentSize.height * 0.5f - 30.0f));
         }
     }
 }
@@ -1549,7 +1746,7 @@ static void MGInvalidateTimer(NSTimer **timer)
                 CCMyBeanSprite* NodeMessage = [pNode.m_ObstacleList objectAtIndex:j];
                 if(NodeMessage)
                 {
-                    if(j == 0 && NodeMessage.position.x > 480)
+                    if(j == 0 && NodeMessage.position.x > MGVisibleWidth(m_winSize))
                     {
                         break;
                     }
@@ -1827,7 +2024,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         //[self GameOver];
         //Add by zhengxf "计算游戏的分数" 2012-8-9 ------end-------
     }
-    else if(m_nLevelLen - m_nNowLevelLen == 320 && !m_bAddHole)
+    else if((m_nLevelLen - m_nNowLevelLen) <= MGVisibleWidth(m_winSize) && !m_bAddHole)
     {
         m_bAddHole = true;
         m_spTree.visible = true;
@@ -1953,7 +2150,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         CCActionManager* pActionManager =  [[CCDirector sharedDirector] actionManager];
         [pActionManager pauseTarget:m_BridSprite];
         PauseGame* GameLayer = [PauseGame node];
-        GameLayer.position = ccp(240, 160);
+        GameLayer.position = ccp(m_winSize.width * 0.5f, m_winSize.height * 0.5f);
         [GameLayer SetConturnBut:self :@selector(GameContrun:)];
         [GameLayer SetScore:m_nBigLevel :m_nSmallLevel];
         [self addChild:GameLayer z:4 tag: PAUSE_LAYER_INDEX];
@@ -1970,7 +2167,7 @@ static void MGInvalidateTimer(NSTimer **timer)
     for(int n=0; n<m_HunterList.count; n++)
     {
         CCMyHunterSprite *Hunter = [m_HunterList objectAtIndex:n];
-        if(Hunter && Hunter.position.x >= 0 && Hunter.position.x <= 480)
+        if(Hunter && Hunter.position.x >= 0 && Hunter.position.x <= MGVisibleWidth(m_winSize))
         {
             if(bPause)
             {
@@ -2000,7 +2197,7 @@ static void MGInvalidateTimer(NSTimer **timer)
     for(int n=0; n<m_HunterList.count; n++)
     {
         CCMyHunterSprite *Hunter = [m_HunterList objectAtIndex:n];
-        if(Hunter && Hunter.position.x >= 0 && Hunter.position.x <= 480)
+        if(Hunter && Hunter.position.x >= 0 && Hunter.position.x <= MGVisibleWidth(m_winSize))
         {
             if((!Hunter.visible || bConturn) && !Hunter.m_bDead)
             {
@@ -2035,7 +2232,7 @@ static void MGInvalidateTimer(NSTimer **timer)
             else if(Hunter.visible && !Hunter.m_bDead)//Hunter.m_nType == 0 && 
             {
                 //人物有跳起的动画
-                if(Hunter.m_nActionIndex == 1 && Hunter.position.x < 240)
+                if(Hunter.m_nActionIndex == 1 && Hunter.position.x < (MGVisibleWidth(m_winSize) * 0.5f))
                 {
                     Hunter.m_nActionIndex = 0;
                     [Hunter stopAllActions];
@@ -2338,7 +2535,7 @@ static void MGInvalidateTimer(NSTimer **timer)
     //Add by zhengxf "测试粒子效果" 2012-7-10 --------begin-------
     CCParticleSystem* particle = [CCParticleSystemQuad particleWithFile:@"TestFrie.plist"];
     particle.positionType = kCCPositionTypeFree; 
-    particle.position = ccp(440,155);
+    particle.position = ccp(MGVisibleWidth(m_winSize) - 40.0f, 155.0f);
     [self addChild:particle z:0];
     //Add by zhengxf "测试粒子效果" 2012-7-10 --------end-------
     //Add by zhengxf about "树洞粒子效果" 2012-9-5 -------end-------
@@ -2367,7 +2564,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         m_bRandSystem = false;
         m_bStartHawk = true;
         m_spSigh = [CCSprite spriteWithFile:@"GameOver_Bean.png"];
-        m_spSigh.position = ccp(440, m_BridSprite.position.y);
+        m_spSigh.position = ccp(MGVisibleWidth(m_winSize) - 40.0f, m_BridSprite.position.y);
         [self addChild:m_spSigh z:2 tag:0];
         id SighAction = [[AnimationDelegate shareAnimationDelegate] SighNomal];
         [m_spSigh runAction:SighAction];
@@ -2377,7 +2574,7 @@ static void MGInvalidateTimer(NSTimer **timer)
         if(m_nUseTime <= 2)
         {
             m_nUseTime += 0.01;
-            m_spSigh.position = ccp(440, m_BridSprite.position.y);
+            m_spSigh.position = ccp(MGVisibleWidth(m_winSize) - 40.0f, m_BridSprite.position.y);
             //改变感叹号的位置
         }
         else 
@@ -2394,7 +2591,7 @@ static void MGInvalidateTimer(NSTimer **timer)
 {
     //鹰的图片
     m_spHawk = [CCSprite spriteWithFile:@"GameOver_Bean.png"];
-    m_spHawk.position = ccp(520, m_spSigh.position.y);
+    m_spHawk.position = ccp(MGVisibleWidth(m_winSize) + m_spHawk.contentSize.width * 0.5f, m_spSigh.position.y);
     [self addChild:m_spHawk z:2 tag:0];
     [self removeChild:m_spSigh cleanup:YES];
     id HawkAction = [[AnimationDelegate shareAnimationDelegate] HawkFlyAnima];
@@ -2409,7 +2606,7 @@ static void MGInvalidateTimer(NSTimer **timer)
     //add by zhengxf about "鹰鸣声音的播放" 2012-9-5 -------end-------
     
     [m_spHawk runAction:[CCSequence actions:
-                           [CCMoveBy actionWithDuration:0.9 position:ccp(-520, 0)],
+                           [CCMoveBy actionWithDuration:0.9 position:ccp(-(MGVisibleWidth(m_winSize) + m_spHawk.contentSize.width), 0)],
                            [CCCallFuncN actionWithTarget:self selector:@selector(HawkMove:)],
                            nil]];
 }
@@ -2435,20 +2632,16 @@ static void MGInvalidateTimer(NSTimer **timer)
     if(nLevel == 1 && !bHelp1)
     {
         m_bHelp = true;
-        //加入图片
-        m_spHelp1 = [CCSprite spriteWithFile:@"GameHelp1.png"];
-        m_spHelp1.position = ccp(m_winSize.width*0.5, m_winSize.height * 0.5);
-        [self addChild:m_spHelp1 z:5 tag:0];
+        MGShowHelpSprite(self, &m_spHelp1, @"GameHelp1.png", m_winSize);
         m_bGameStop = true;
+        m_bAllowTouch = false;
     }
     else if(nLevel == 3 && !bHelp3)
     {
         m_bHelp3 = true;
-        //加入图片
-        m_spHelp3 = [CCSprite spriteWithFile:@"GameHelp3.png"];
-        m_spHelp3.position = ccp(m_winSize.width*0.5, m_winSize.height * 0.5);
-        [self addChild:m_spHelp3 z:5 tag:0];
+        MGShowHelpSprite(self, &m_spHelp3, @"GameHelp3.png", m_winSize);
         m_bGameStop = true;
+        m_bAllowTouch = false;
     }
 }
 
@@ -2459,15 +2652,13 @@ static void MGInvalidateTimer(NSTimer **timer)
     {
         if(m_nHelpIndex == 0)
         {
-            [self removeChild:m_spHelp1 cleanup:YES];
-            m_spHelp2 = [CCSprite spriteWithFile:@"GameHelp2.png"];
-            m_spHelp2.position = ccp(m_winSize.width*0.5, m_winSize.height * 0.5);
-            [self addChild:m_spHelp2 z:5 tag:0];
+            MGHideHelpOverlay(self, &m_spHelp1);
+            MGShowHelpSprite(self, &m_spHelp2, @"GameHelp2.png", m_winSize);
         }
         else if(m_nHelpIndex == 1)
         {
-            [self removeChild:m_spHelp2 cleanup:YES];
-            //[[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL1];
+            MGHideHelpOverlay(self, &m_spHelp2);
+            [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL1];
             m_nHelpIndex = 0;
             m_bHelp = false;
             m_bAllowTouch = true;
@@ -2477,8 +2668,8 @@ static void MGInvalidateTimer(NSTimer **timer)
     }
     else if(m_bHelp3)
     {
-        [self removeChild:m_spHelp3 cleanup:YES];
-        //[[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL3];
+        MGHideHelpOverlay(self, &m_spHelp3);
+        [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL3];
         m_nHelpIndex = 0;
         m_bHelp3 = false;
         m_bAllowTouch = true;

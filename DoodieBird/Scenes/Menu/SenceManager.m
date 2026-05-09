@@ -23,8 +23,7 @@ static void SMTransitionToScene(CCScene *scene)
         return;
     }
 
-    [[CCDirector sharedDirector] replaceScene:[CCTransitionFade transitionWithDuration:0.3f scene:scene withColor:ccWHITE]];
-    [[CCTextureCache sharedTextureCache] removeUnusedTextures];
+    [[CCDirector sharedDirector] replaceScene:scene];
 }
 
 @implementation SenceManager

@@ -3,7 +3,7 @@
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 //
 
 #import "SelectChapterScene.h"
@@ -12,6 +12,7 @@
 #import "LevelManager.h"
 #import "DefaultFile.h"
 #import "def.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 @implementation SelectChapter
 
@@ -20,11 +21,11 @@
 	self = [super init];
 	if (self)
 	{
-        CCSprite *sp = [CCSprite spriteWithFile:@"SelectChapterBk.png"];
-		sp.anchorPoint = CGPointZero;
-		[self addChild:sp z:0 tag:1];
-        
         m_winSize = [CCDirector sharedDirector].winSize;
+
+        CCSprite *sp = [CCSprite spriteWithFile:DBWideAssetName(@"SelectChapterBk.png", m_winSize)];
+        DBLayoutCoverSprite(sp, m_winSize);
+		[self addChild:sp z:0 tag:1];
         
         //Add by zhengxf about "选择章节" 2012-7-31 ------begin-------
         CCSprite* spSelectChapter = [CCSprite spriteWithFile:@"SelectCommon.png"];
@@ -38,10 +39,11 @@
         //Add by zhengxf about "选择章节" 2012-7-31 ------end-------
         
         //Add by zhengxf about "选择关卡的按钮" 2012-7-30 -------begin--------
+        CGFloat offset = 20.0f;
         //章节1－－－－begin-----------
         MainItemButton* BtFrist = [MainItemButton node];
         [BtFrist SetTarget:self :@selector(ChapterFrist:)];
-        [BtFrist SetVeg:ccp(m_winSize.width/ 2 - 150,m_winSize.height /2 - 50) :1 :0 :false :true :@"Chapter1Noml.png" :@"Chapter1Sel.png"];
+        [BtFrist SetVeg:ccp(m_winSize.width/ 2 - 150,m_winSize.height /2 - offset) :1 :0 :false :true :@"Chapter1Noml.png" :@"Chapter1Sel.png"];
         //[BtFrist ShowScore:100 :ccp(0,0) :2];
         //[BtFrist SetLocke:false];
         //[BtFrist RunAction];
@@ -54,7 +56,7 @@
         bool bLock = [[DefaultFile sharedDefaultFile] GetBoolForKey:pKey];
         MainItemButton* BtThrid = [MainItemButton node];
         [BtThrid SetTarget:self :@selector(ChapterThrid:)];
-        [BtThrid SetVeg:ccp(m_winSize.width / 2 + 150, m_winSize.height/ 2 - 50) :1 :0 :!bLock :true :@"Chapter3Noml.png" :@"Chapter3Sel.png"];
+        [BtThrid SetVeg:ccp(m_winSize.width / 2 + 150, m_winSize.height/ 2 - offset) :1 :0 :!bLock :true :@"Chapter3Noml.png" :@"Chapter3Sel.png"];
         if(!bLock)
         {
             [BtThrid SetLocke:!bLock];
@@ -67,7 +69,7 @@
             [BtThrid RunAction];
             [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:pKey];
             bLock = true;
-            [BtThrid SetVeg:ccp(m_winSize.width / 2 + 150, m_winSize.height/ 2 - 50) :1 :0 :!bLock :true :@"Chapter3Noml.png" :@"Chapter3Sel.png"];
+            [BtThrid SetVeg:ccp(m_winSize.width / 2 + 150, m_winSize.height/ 2 - offset) :1 :0 :!bLock :true :@"Chapter3Noml.png" :@"Chapter3Sel.png"];
         }
         [self addChild:BtThrid z:0 tag:GAME_CHAPTER_THRID];
         
@@ -76,7 +78,7 @@
         bLock = [[DefaultFile sharedDefaultFile] GetBoolForKey:pKey];
         MainItemButton* BtSecond = [MainItemButton node];
         [BtSecond SetTarget:self :@selector(ChapterSecond:)];
-        [BtSecond SetVeg:ccp(m_winSize.width / 2, m_winSize.height/ 2 - 50) :1 :0 :!bLock :true :@"Chapter2Noml.png" :@"Chapter2Sel.png"];
+        [BtSecond SetVeg:ccp(m_winSize.width / 2, m_winSize.height/ 2 - offset) :1 :0 :!bLock :true :@"Chapter2Noml.png" :@"Chapter2Sel.png"];
         if(!bLock)
         {
             [BtSecond SetLocke:!bLock];
@@ -89,13 +91,13 @@
             [BtSecond RunAction];
             [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:pKey];
             bLock = true;
-            [BtSecond SetVeg:ccp(m_winSize.width / 2, m_winSize.height/ 2 - 50) :1 :0 :!bLock :true :@"Chapter2Noml.png" :@"Chapter2Sel.png"];
-        }        
+            [BtSecond SetVeg:ccp(m_winSize.width / 2, m_winSize.height/ 2 - offset) :1 :0 :!bLock :true :@"Chapter2Noml.png" :@"Chapter2Sel.png"];
+        }
         [self addChild:BtSecond z:0 tag:GAME_CHAPTER_SECOND];
         
         //Add by zhengxf about "显示星星的背景" 2012-8-7 -------begin------
         CCSprite* pSp = [CCSprite  spriteWithFile:@"StarBk.png"];
-        pSp.position = ccp(m_winSize.width -[pSp textureRect].size.width/2, [pSp textureRect].size.height/2 + 5);
+        pSp.position = ccp(m_winSize.width -[pSp textureRect].size.width/2-25, [pSp textureRect].size.height/2 + 22);
         [self addChild:pSp];
         
         CCSprite* pSpStar = [CCSprite  spriteWithFile:@"ChapterStar.png"];
@@ -114,7 +116,7 @@
 		CCSprite *ReturnSelected = [CCSprite spriteWithFile:@"ReturnSel.png"];
 		CCMenuItemSprite *ReturnCook = [CCMenuItemSprite itemWithNormalSprite:ReturnNormal selectedSprite:ReturnSelected target:self selector:@selector(Return:)];
 		CCMenu *menuReturn = [CCMenu menuWithItems: ReturnCook, nil];
-		[menuReturn setPosition:ccp(40,20)];
+		[menuReturn setPosition:ccp(65,35)];
 		[self addChild: menuReturn z:1 tag:GAME_RETURN];
 		//返回 －－－－end-----------
     }

@@ -4,13 +4,14 @@
 //  DoodieBird
 //
 //  Created by LuckyLee on 26-04-22.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2026年 FancyGame. All rights reserved.
 //
 
 #import "ShopSence.h"
 #import "SenceManager.h"
 #import "AnimationDelegate.h"
 #import "def.h"
+#import "../../Gameplay/Shared/LayoutHelper.h"
 
 @implementation ShopLayer
 
@@ -19,8 +20,9 @@
 	self = [super init];
 	if (self)
 	{
-        CCSprite *sp = [CCSprite spriteWithFile:@"ShopBk.png"];
-		sp.anchorPoint = CGPointZero;
+        CGSize winSize = [CCDirector sharedDirector].winSize;
+        CCSprite *sp = [CCSprite spriteWithFile:DBWideAssetName(@"ShopBk.png", winSize)];
+        DBLayoutCoverSprite(sp, winSize);
 		[self addChild:sp z:0 tag:1];
         
         

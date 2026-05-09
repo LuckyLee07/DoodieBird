@@ -12,6 +12,8 @@
 #import "DefaultFile.h"
 #import "MusicMannger.h"
 #import "MainMenuSence.h"
+#import "MainGameScence.h"
+#import "LevelManager.h"
 
 @interface LandscapeNavigationController : UINavigationController
 @end
@@ -35,6 +37,41 @@
 
 @end
 
+static CGRect DBLandscapeBoundsForRect(CGRect rect)
+{
+    CGFloat width = CGRectGetWidth(rect);
+    CGFloat height = CGRectGetHeight(rect);
+
+    if (width <= 0.0f || height <= 0.0f)
+    {
+        CGRect screenBounds = [[UIScreen mainScreen] bounds];
+        width = CGRectGetWidth(screenBounds);
+        height = CGRectGetHeight(screenBounds);
+    }
+
+    return CGRectMake(0.0f, 0.0f, MAX(width, height), MIN(width, height));
+}
+
+static NSString *DBStringFromCGSize(CGSize size)
+{
+    return NSStringFromCGSize(size);
+}
+
+static BOOL DBDebugShouldAutoStartGame(void)
+{
+#ifdef DEBUG
+    NSString *value = [[[NSProcessInfo processInfo] environment] objectForKey:@"DB_AUTOSTART_GAME"];
+    if ([value isEqualToString:@"1"])
+    {
+        return YES;
+    }
+
+    return [[[NSProcessInfo processInfo] arguments] containsObject:@"DB_AUTOSTART_GAME"];
+#else
+    return NO;
+#endif
+}
+
 @implementation AppController
 
 @synthesize window=window_, navController=navController_, director=director_;
@@ -53,6 +90,13 @@
 {
     (void)application;
     (void)launchOptions;
+
+    if (![self usesSceneLifecycle])
+    {
+        self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
+        [self configureMainInterfaceInWindow:self.window];
+    }
+
 	return YES;
 }
 
@@ -68,17 +112,22 @@
     {
         [window_ setRootViewController:navController_];
         [window_ makeKeyAndVisible];
+        [self forceLandscapeOrientation];
+        [self refreshViewportForCurrentWindow];
         return;
     }
 
- 	// Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
-	CCGLView *glView = [CCGLView viewWithFrame:[window_ bounds]
+	// Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
+    CGRect landscapeBounds = DBLandscapeBoundsForRect([window_ bounds]);
+	CCGLView *glView = [CCGLView viewWithFrame:landscapeBounds
 								   pixelFormat:kEAGLColorFormatRGB565	//kEAGLColorFormatRGBA8
 								   depthFormat:0	//GL_DEPTH_COMPONENT24_OES
 							preserveBackbuffer:NO
 									sharegroup:nil
 								 multiSampling:NO
 							   numberOfSamples:0];
+    glView.frame = landscapeBounds;
+    glView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [glView setMultipleTouchEnabled:YES];
 	director_ = (CCDirectorIOS*) [CCDirector sharedDirector];
 
@@ -112,6 +161,8 @@
 
 	// make main window visible
 	[window_ makeKeyAndVisible];
+    [self forceLandscapeOrientation];
+    [self refreshViewportForCurrentWindow];
 
 	// Default texture format for PNG/BMP/TIFF/JPEG/GIF images
 	// It can be RGBA8888, RGBA4444, RGB5_A1, RGB565
@@ -131,8 +182,19 @@
 	// Assume that PVR images have premultiplied alpha
 	[CCTexture2D PVRImagesHavePremultipliedAlpha:YES];
 
-    // and add the main menu scene to the stack.
-    [director_ runWithScene:[MainMenuSence ShowScene]];
+    // and add the main scene to the stack.
+    if (DBDebugShouldAutoStartGame())
+    {
+        [[LevelManager sharedLevelMannger] SetBigLevel:1];
+        [[LevelManager sharedLevelMannger] SetLevel:1];
+        [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL1];
+        [[DefaultFile sharedDefaultFile] SetBoolForKey:true ForKey:IS_FRIST_LEVEL3];
+        [director_ runWithScene:[MainGameScence ShowScene]];
+    }
+    else
+    {
+        [director_ runWithScene:[MainMenuSence ShowScene]];
+    }
     MusicMannger* pMusicMgr = [MusicMannger sharedMusicMannger];
     if(pMusicMgr)
     {
@@ -144,6 +206,64 @@
             [pMusicMgr PlayMusic:@"MusicBk.mp3" :true];
         }
     }
+}
+
+- (void)forceLandscapeOrientation
+{
+    UIInterfaceOrientation orientation = UIInterfaceOrientationLandscapeRight;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    if ([[UIApplication sharedApplication] respondsToSelector:@selector(setStatusBarOrientation:animated:)])
+    {
+        [[UIApplication sharedApplication] setStatusBarOrientation:orientation animated:NO];
+    }
+#pragma clang diagnostic pop
+
+    if ([[UIDevice currentDevice] respondsToSelector:@selector(setValue:forKey:)])
+    {
+        [[UIDevice currentDevice] setValue:[NSNumber numberWithInteger:orientation] forKey:@"orientation"];
+    }
+
+    if (@available(iOS 16.0, *))
+    {
+        [navController_ setNeedsUpdateOfSupportedInterfaceOrientations];
+        [director_ setNeedsUpdateOfSupportedInterfaceOrientations];
+    }
+    else
+    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [UIViewController attemptRotationToDeviceOrientation];
+#pragma clang diagnostic pop
+    }
+}
+
+- (void)refreshViewportForCurrentWindow
+{
+    if (window_ == nil || navController_ == nil || director_ == nil)
+    {
+        return;
+    }
+
+    CGRect landscapeBounds = DBLandscapeBoundsForRect([window_ bounds]);
+
+    UIView *navigationView = navController_.view;
+    if (navigationView != nil)
+    {
+        navigationView.frame = landscapeBounds;
+    }
+
+    CCGLView *directorView = (CCGLView *)[director_ view];
+    if (directorView != nil)
+    {
+        directorView.frame = landscapeBounds;
+        directorView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [directorView setNeedsLayout];
+        [directorView layoutIfNeeded];
+        [director_ reshapeProjection:directorView.bounds.size];
+    }
+
 }
 
 -(void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
@@ -229,6 +349,8 @@
 
 - (void)sceneDidBecomeActive
 {
+    [self forceLandscapeOrientation];
+    [self refreshViewportForCurrentWindow];
 	if( [navController_ visibleViewController] == director_ )
 		[director_ resume];
 }

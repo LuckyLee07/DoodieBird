@@ -22,6 +22,8 @@
 @property (readonly) CCDirectorIOS *director;
 
 - (void)configureMainInterfaceInWindow:(UIWindow *)window;
+- (void)forceLandscapeOrientation;
+- (void)refreshViewportForCurrentWindow;
 - (void)sceneWillResignActive;
 - (void)sceneDidBecomeActive;
 - (void)sceneDidEnterBackground;
